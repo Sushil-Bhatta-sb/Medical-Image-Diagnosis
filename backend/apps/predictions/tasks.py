@@ -6,8 +6,16 @@ import logging
 import random
 from datetime import datetime
 from django.utils import timezone
-from celery import shared_task
 from .models import Prediction
+
+try:
+    from celery import shared_task
+except ImportError:
+    # Fallback when celery is not installed
+    def shared_task(*args, **kwargs):
+        def decorator(func):
+            return func
+        return decorator
 
 logger = logging.getLogger(__name__)
 
