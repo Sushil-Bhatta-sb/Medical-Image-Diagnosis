@@ -1,6 +1,5 @@
 """
-API views for the predictions app.
-Handles prediction creation, status checking, and history retrieval.
+Views for the predictions app.
 """
 
 from rest_framework.views import APIView
@@ -33,12 +32,6 @@ class PredictionCreateView(APIView):
     def post(self, request):
         """
         Create a new prediction and start async inference.
-        
-        Args:
-            request: HTTP request with image_url in body
-            
-        Returns:
-            Response with created prediction (PENDING status)
         """
         serializer = PredictionCreateSerializer(data=request.data)
         
@@ -78,12 +71,7 @@ class PredictionDetailView(RetrieveAPIView):
     lookup_field = 'id'
 
     def get_queryset(self):
-        """
-        Return predictions for the current user.
-        
-        Returns:
-            QuerySet of user's predictions
-        """
+        """Return predictions for the current user."""
         return Prediction.objects.filter(user=self.request.user)
 
 
@@ -98,12 +86,7 @@ class PredictionHistoryView(ListAPIView):
     pagination_class = StandardResultsSetPagination
 
     def get_queryset(self):
-        """
-        Return all predictions for the current user, newest first.
-        
-        Returns:
-            QuerySet of user's predictions ordered by creation date
-        """
+        """Return all predictions for the current user, newest first."""
         return Prediction.objects.filter(
             user=self.request.user
         ).order_by('-created_at')

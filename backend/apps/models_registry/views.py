@@ -1,13 +1,9 @@
 """
-API views for the models_registry app.
-Provides endpoints to list and retrieve ML models with metrics.
+Views for the models_registry app.
 """
 
-from rest_framework.views import APIView
 from rest_framework.generics import ListAPIView, RetrieveAPIView
-from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
-from rest_framework import status
 from .models import MLModel
 from .serializers import MLModelSerializer
 
@@ -24,12 +20,7 @@ class MLModelListView(ListAPIView):
     pagination_class = None
 
     def get_queryset(self):
-        """
-        Return all active models, ordered by creation date.
-        
-        Returns:
-            QuerySet of active MLModel instances with prefetched metrics
-        """
+        """Return all active models, ordered by creation date."""
         return MLModel.objects.filter(is_active=True).prefetch_related('metrics').order_by('-created_at')
 
 

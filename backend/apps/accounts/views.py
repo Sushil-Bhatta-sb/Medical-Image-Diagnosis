@@ -1,6 +1,5 @@
 """
-API views for the accounts app.
-Handles user profile endpoints and authentication.
+Views for the accounts app.
 """
 
 from rest_framework.views import APIView
@@ -13,7 +12,7 @@ from .serializers import UserProfileSerializer
 
 class ProfileView(APIView):
     """
-    Get or update the current authenticated user's profile.
+    Get the current authenticated user's profile.
     
     GET /api/auth/profile/ - Returns current user's profile
     """
@@ -22,12 +21,6 @@ class ProfileView(APIView):
     def get(self, request):
         """
         Retrieve the current authenticated user's profile.
-        
-        Args:
-            request: HTTP request with authenticated user
-            
-        Returns:
-            Response with UserProfileSerializer data
         """
         try:
             profile = request.user.profile

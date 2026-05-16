@@ -1,6 +1,5 @@
 """
 Serializers for the predictions app.
-Handles prediction creation and serialization of results.
 """
 
 from rest_framework import serializers

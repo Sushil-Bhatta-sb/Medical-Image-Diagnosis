@@ -1,6 +1,5 @@
 """
 Serializers for the models_registry app.
-Handles serialization of ML models and their training metrics.
 """
 
 from rest_framework import serializers
@@ -8,9 +7,7 @@ from .models import MLModel, ModelMetrics
 
 
 class ModelMetricsSerializer(serializers.ModelSerializer):
-    """
-    Serializes training metrics for a specific model.
-    """
+    """Serializes training metrics for a specific model."""
     class Meta:
         model = ModelMetrics
         fields = [
@@ -26,9 +23,7 @@ class ModelMetricsSerializer(serializers.ModelSerializer):
 
 
 class MLModelSerializer(serializers.ModelSerializer):
-    """
-    Serializes ML model information with nested metrics.
-    """
+    """Serializes ML model information with nested metrics."""
     metrics = ModelMetricsSerializer(many=True, read_only=True)
     model_type_display = serializers.CharField(
         source='get_model_type_display',

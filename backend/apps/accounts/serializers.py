@@ -1,6 +1,5 @@
 """
 Serializers for the accounts app.
-Handles user profile serialization for API responses.
 """
 
 from rest_framework import serializers
@@ -10,7 +9,7 @@ from .models import UserProfile
 
 class UserProfileSerializer(serializers.ModelSerializer):
     """
-    Serializes UserProfile model with related user information.
+    Serializer for UserProfile with related User information.
     """
     email = serializers.SerializerMethodField()
     username = serializers.SerializerMethodField()
@@ -35,10 +34,10 @@ class UserProfileSerializer(serializers.ModelSerializer):
             'updated_at'
         ]
 
-    def get_email(self, obj: UserProfile) -> str:
+    def get_email(self, obj):
         """Extract email from related User."""
         return obj.user.email
 
-    def get_username(self, obj: UserProfile) -> str:
+    def get_username(self, obj):
         """Extract username from related User."""
         return obj.user.username
