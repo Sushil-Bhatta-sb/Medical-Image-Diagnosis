@@ -1,0 +1,25 @@
+# CNN Training Configuration
+learning_rate: 0.001
+batch_size: 32
+epochs: 50
+weight_decay: 0.0001
+
+# Data paths
+dataset_path: data/chest_xray
+weights_path: backend/weights/resnet50_best.pth
+
+# Model settings
+pretrained: true
+num_classes: 9
+
+# Augmentation settings
+augmentation:
+  horizontal_flip: true
+  vertical_flip: true
+  rotation_degrees: 15
+  color_jitter: true
+
+# Early stopping
+early_stopping_patience: 5
+reduce_lr_patience: 3
+reduce_lr_factor: 0.5

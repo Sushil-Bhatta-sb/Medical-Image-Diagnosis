@@ -1,0 +1,22 @@
+# Vision Transformer Training Configuration
+learning_rate: 0.0005
+batch_size: 16
+epochs: 40
+weight_decay: 0.0001
+
+# Data paths
+dataset_path: data/chest_xray
+weights_path: backend/weights/vit_best.pth
+
+# Model settings
+model_id: google/vit-base-patch16-224
+num_classes: 9
+
+# Early stopping
+early_stopping_patience: 3
+reduce_lr_patience: 2
+reduce_lr_factor: 0.5
+
+# Optimizer settings
+optimizer: adam
+warmup_steps: 500
