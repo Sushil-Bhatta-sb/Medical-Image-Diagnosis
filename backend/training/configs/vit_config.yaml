@@ -1,0 +1,30 @@
+# Vision Transformer (ViT) Training Configuration
+
+learning_rate: 0.00005
+batch_size: 16
+epochs: 30
+image_size: 224
+num_classes: 9
+
+# HuggingFace model ID
+model_id: "google/vit-base-patch16-224"
+
+# Dataset paths
+dataset_path: "data/chest_xray"
+
+# Model weights path
+weights_path: "backend/weights/vit_best.pth"
+
+# Training parameters
+optimizer: "Adam"
+scheduler: "ReduceLROnPlateau"
+early_stopping_patience: 5
+
+# Device
+device: "cuda"  # or "cpu"
+
+# ViT-specific settings
+patch_size: 16
+hidden_size: 768
+num_hidden_layers: 12
+num_attention_heads: 12
