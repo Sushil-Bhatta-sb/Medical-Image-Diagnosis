@@ -51,7 +51,7 @@ const Navbar = () => {
         </Link>
 
         {/* Desktop Navigation */}
-        <div style={{ display: 'none', gap: '30px', '@media (min-width: 768px)': { display: 'flex' } }}>
+        <div className="desktop-only" style={{ gap: '30px' }}>
           {user && (
             <>
               <Link
@@ -127,7 +127,7 @@ const Navbar = () => {
                 }}>
                   {userInitials}
                 </div>
-                <div style={{ display: 'none, '@media (min-width: 768px)': { display: 'block' } }}>
+                <div className="desktop-only-block">
                   <p style={{
                     color: 'var(--text-primary)',
                     fontSize: '13px',
@@ -162,14 +162,13 @@ const Navbar = () => {
           {/* Mobile menu button */}
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            className="mobile-only"
             style={{
-              display: 'flex',
               alignItems: 'center',
               background: 'none',
               border: 'none',
               color: 'var(--text-primary)',
               cursor: 'pointer',
-              '@media (min-width: 768px)': { display: 'none' },
             }}
           >
             {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}

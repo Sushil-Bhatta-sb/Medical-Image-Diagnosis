@@ -124,7 +124,7 @@ const ProfilePage = () => {
         </section>
 
         {/* Statistics */}
-        <section style({ marginBottom: '32px' }}>
+        <section style={{ marginBottom: '32px' }}>
           <h2 style={{
             color: 'var(--text-primary)',
             fontSize: '20px',

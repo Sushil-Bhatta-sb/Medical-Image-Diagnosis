@@ -148,6 +148,55 @@ h1, h2, h3, h4, h5, h6 {
   font-weight: 600;
 }
 
+/* Responsive Utility Classes */
+.desktop-only {
+  display: none;
+}
+
+.mobile-only {
+  display: flex;
+}
+
+@media (min-width: 768px) {
+  .desktop-only {
+    display: flex;
+  }
+
+  .desktop-only-block {
+    display: block;
+  }
+
+  .desktop-only-grid {
+    display: grid;
+  }
+
+  .mobile-only {
+    display: none;
+  }
+
+  .sidebar-wrapper {
+    position: relative;
+    transform: translateX(0);
+    margin-top: 0;
+  }
+
+  .sidebar-overlay {
+    display: none;
+  }
+
+  .sidebar-close-btn {
+    display: none;
+  }
+
+  .main-content-desktop {
+    margin-left: 250px;
+  }
+
+  .mobile-menu-fab {
+    display: none;
+  }
+}
+
 /* Selection */
 ::selection {
   background-color: var(--accent);

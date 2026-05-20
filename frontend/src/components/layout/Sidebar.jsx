@@ -20,19 +20,20 @@ const Sidebar = ({ isOpen, onClose }) => {
       {isOpen && (
         <div
           onClick={onClose}
+          className="sidebar-overlay"
           style={{
             position: 'fixed',
             inset: 0,
             background: 'rgba(0, 0, 0, 0.5)',
             zIndex: 999,
-            display: 'none',
-            '@media (max-width: 767px)': { display: 'block' },
+            display: 'block',
           }}
         />
       )}
 
       {/* Sidebar */}
       <aside
+        className="sidebar-wrapper"
         style={{
           position: 'fixed',
           left: 0,
@@ -47,16 +48,12 @@ const Sidebar = ({ isOpen, onClose }) => {
           marginTop: '70px',
           transition: 'transform 0.3s ease',
           transform: isOpen ? 'translateX(0)' : 'translateX(-100%)',
-          '@media (min-width: 768px)': {
-            position: 'relative',
-            transform: 'translateX(0)',
-            marginTop: 0,
-          },
         }}
       >
         {/* Close button for mobile */}
         <button
           onClick={onClose}
+          className="sidebar-close-btn"
           style={{
             display: 'flex',
             alignItems: 'center',
@@ -68,7 +65,6 @@ const Sidebar = ({ isOpen, onClose }) => {
             color: 'var(--text-primary)',
             cursor: 'pointer',
             marginBottom: '20px',
-            '@media (min-width: 768px)': { display: 'none' },
           }}
         >
           <X size={24} />

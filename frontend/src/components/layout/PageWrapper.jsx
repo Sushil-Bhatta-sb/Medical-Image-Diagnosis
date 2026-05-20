@@ -9,21 +9,16 @@ const PageWrapper = ({ children }) => {
       <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
       
       <main
+        className="main-content-desktop"
         style={{
           flex: 1,
           width: '100%',
           marginLeft: 'auto',
-          '@media (min-width: 768px)': {
-            marginLeft: '250px',
-          },
         }}
       >
         {/* Mobile menu button (in header area) */}
-        <div style={{
+        <div className="mobile-menu-fab" style={{
           display: 'flex',
-          '@media (min-width: 768px)': {
-            display: 'none',
-          },
         }}>
           <button
             onClick={() => setSidebarOpen(!sidebarOpen)}
