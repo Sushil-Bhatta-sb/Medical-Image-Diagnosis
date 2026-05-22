@@ -1,149 +1,138 @@
-import { useState, useEffect } from 'react';
-import { supabase } from '../lib/supabaseClient';
-import useAuthStore from '../store/authStore';
-import toast from 'react-hot-toast';
+import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { supabase } from '../lib/supabaseClient'
+import useAuthStore from '../store/authStore'
+import apiClient from '../lib/apiClient'
+import toast from 'react-hot-toast'
 
 export const useAuth = () => {
-  const { user, session, isLoading, setUser, setSession, logout, initialize, setLoading } = useAuthStore();
-  const [error, setError] = useState(null);
+  const navigate = useNavigate()
+  const { user, session, isLoading, isAuthenticated, setUser, setSession, setLoading, logout: logoutFromStore } = useAuthStore()
+  const [error, setError] = useState(null)
 
-  // Listen for auth changes
+  // Initialize auth state on mount
   useEffect(() => {
+    // Get initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session)
+      setUser(session?.user ?? null)
+    })
+
+    // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        if (session) {
-          initialize(session.user, session);
-        } else {
-          initialize(null, null);
+        setSession(session)
+        setUser(session?.user ?? null)
+        setLoading(false)
+
+        if (event === 'SIGNED_IN') {
+          // Call Django backend to create/get user profile
+          try {
+            await apiClient.get('/auth/profile/')
+          } catch (e) {
+            console.log('Profile fetch error:', e)
+          }
+          navigate('/dashboard')
+        }
+
+        if (event === 'SIGNED_OUT') {
+          navigate('/auth')
         }
       }
-    );
+    )
 
-    // Check initial auth state
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) {
-        initialize(session.user, session);
-      } else {
-        setLoading(false);
-      }
-    });
-
-    return () => subscription?.unsubscribe();
-  }, [initialize, setLoading]);
+    return () => subscription.unsubscribe()
+  }, [setSession, setUser, setLoading, navigate])
 
   const login = async (email, password) => {
+    setLoading(true)
     try {
-      setError(null);
-      setLoading(true);
+      setError(null)
       const { data, error: authError } = await supabase.auth.signInWithPassword({
         email,
         password,
-      });
+      })
       
-      if (authError) {
-        setError(authError.message);
-        toast.error(authError.message);
-        return { error: authError };
-      }
-
-      if (data.session) {
-        setSession(data.session);
-        setUser(data.user);
-        toast.success('Login successful');
-      }
-      return { data };
+      if (authError) throw authError
+      return { data }
     } catch (err) {
-      const message = err.message || 'Login failed';
-      setError(message);
-      toast.error(message);
-      return { error: err };
-    } finally {
-      setLoading(false);
+      const message = err.message || 'Login failed'
+      setError(message)
+      toast.error(message)
+      setLoading(false)
+      throw err
     }
-  };
+  }
 
   const signup = async (email, password) => {
+    setLoading(true)
     try {
-      setError(null);
-      setLoading(true);
+      setError(null)
       const { data, error: authError } = await supabase.auth.signUp({
         email,
         password,
-      });
+      })
       
-      if (authError) {
-        setError(authError.message);
-        toast.error(authError.message);
-        return { error: authError };
-      }
-
-      toast.success('Signup successful! Check your email to confirm.');
-      return { data };
+      if (authError) throw authError
+      toast.success('Signup successful! Check your email to confirm.')
+      return { data }
     } catch (err) {
-      const message = err.message || 'Signup failed';
-      setError(message);
-      toast.error(message);
-      return { error: err };
-    } finally {
-      setLoading(false);
+      const message = err.message || 'Signup failed'
+      setError(message)
+      toast.error(message)
+      setLoading(false)
+      throw err
     }
-  };
+  }
 
   const loginWithGoogle = async () => {
+    setLoading(true)
     try {
-      setError(null);
-      setLoading(true);
+      setError(null)
       const { data, error: authError } = await supabase.auth.signInWithOAuth({
         provider: 'google',
-      });
+        options: {
+          redirectTo: `${window.location.origin}/dashboard`
+        }
+      })
       
-      if (authError) {
-        setError(authError.message);
-        toast.error(authError.message);
-        return { error: authError };
-      }
-
-      return { data };
+      if (authError) throw authError
+      return { data }
     } catch (err) {
-      const message = err.message || 'Google login failed';
-      setError(message);
-      toast.error(message);
-      return { error: err };
-    } finally {
-      setLoading(false);
+      const message = err.message || 'Google login failed'
+      setError(message)
+      toast.error(message)
+      setLoading(false)
+      throw err
     }
-  };
+  }
 
-  const handleLogout = async () => {
+  const logout = async () => {
     try {
-      setLoading(true);
-      const { error: authError } = await supabase.auth.signOut();
-      
-      if (authError) {
-        toast.error(authError.message);
-        return { error: authError };
-      }
-
-      logout();
-      toast.success('Logged out successfully');
-      return { success: true };
+      setLoading(true)
+      const { error: authError } = await supabase.auth.signOut()
+      if (authError) throw authError
+      logoutFromStore()
+      toast.success('Logged out successfully')
+      navigate('/auth')
     } catch (err) {
-      const message = err.message || 'Logout failed';
-      toast.error(message);
-      return { error: err };
+      const message = err.message || 'Logout failed'
+      toast.error(message)
+      throw err
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
   return {
     user,
     session,
     isLoading,
+    isAuthenticated,
     error,
     login,
     signup,
-    logout: handleLogout,
+    logout,
     loginWithGoogle,
-  };
+  }
 };

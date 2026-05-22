@@ -1,8 +1,8 @@
-import { Navigate } from 'react-router-dom';
-import { useAuth } from '../../hooks/useAuth';
+import { Navigate } from 'react-router-dom'
+import useAuthStore from '../../store/authStore'
 
-const ProtectedRoute = ({ children }) => {
-  const { isAuthenticated, isLoading } = useAuth();
+export default function ProtectedRoute({ children }) {
+  const { isAuthenticated, isLoading } = useAuthStore()
 
   if (isLoading) {
     return (
@@ -11,25 +11,18 @@ const ProtectedRoute = ({ children }) => {
         justifyContent: 'center',
         alignItems: 'center',
         height: '100vh',
-        background: 'var(--bg-primary)',
+        background: '#0f1117',
+        color: '#6366f1',
+        fontSize: '18px'
       }}>
-        <div style={{
-          width: '40px',
-          height: '40px',
-          border: '3px solid var(--border)',
-          borderTop: '3px solid var(--accent)',
-          borderRadius: '50%',
-          animation: 'spin 1s linear infinite',
-        }} />
+        Loading...
       </div>
-    );
+    )
   }
 
   if (!isAuthenticated) {
-    return <Navigate to="/auth" replace />;
+    return <Navigate to="/auth" replace />
   }
 
-  return children;
-};
-
-export default ProtectedRoute;
+  return children
+}

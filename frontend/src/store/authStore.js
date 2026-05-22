@@ -1,4 +1,4 @@
-import { create } from 'zustand';
+import { create } from 'zustand'
 
 const useAuthStore = create((set) => ({
   user: null,
@@ -8,22 +8,20 @@ const useAuthStore = create((set) => ({
 
   setUser: (user) => set({ user, isAuthenticated: !!user }),
   
-  setSession: (session) => set({ session, isAuthenticated: !!session }),
+  setSession: (session) => set({ 
+    session, 
+    isAuthenticated: !!session,
+    isLoading: false
+  }),
+  
+  setLoading: (isLoading) => set({ isLoading }),
   
   logout: () => set({ 
     user: null, 
     session: null, 
-    isAuthenticated: false 
+    isAuthenticated: false,
+    isLoading: false
   }),
-  
-  initialize: (user, session) => set({
-    user,
-    session,
-    isAuthenticated: !!user && !!session,
-    isLoading: false,
-  }),
-  
-  setLoading: (isLoading) => set({ isLoading }),
-}));
+}))
 
-export default useAuthStore;
+export default useAuthStore

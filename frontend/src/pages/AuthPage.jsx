@@ -1,65 +1,53 @@
-import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../hooks/useAuth';
-import LoginForm from '../components/auth/LoginForm';
-import SignupForm from '../components/auth/SignupForm';
+import { useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { useState } from 'react'
+import LoginForm from '../components/auth/LoginForm'
+import SignupForm from '../components/auth/SignupForm'
+import useAuthStore from '../store/authStore'
 
-const AuthPage = () => {
-  const [isLogin, setIsLogin] = useState(true);
-  const { isAuthenticated } = useAuth();
-  const navigate = useNavigate();
+export default function AuthPage() {
+  const [isLogin, setIsLogin] = useState(true)
+  const navigate = useNavigate()
+  const { isAuthenticated, isLoading } = useAuthStore()
 
+  // If already logged in redirect to dashboard
   useEffect(() => {
-    if (isAuthenticated) {
-      navigate('/dashboard');
+    if (!isLoading && isAuthenticated) {
+      navigate('/dashboard', { replace: true })
     }
-  }, [isAuthenticated, navigate]);
+  }, [isAuthenticated, isLoading, navigate])
 
   return (
     <div style={{
       minHeight: '100vh',
-      background: 'var(--bg-primary)',
+      background: '#0f1117',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
-      padding: '20px',
-      position: 'relative',
-      overflow: 'hidden',
+      padding: '20px'
     }}>
-      {/* Background pattern */}
       <div style={{
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        backgroundImage: `
-          radial-gradient(circle at 20% 50%, rgba(99, 102, 241, 0.1) 0%, transparent 50%),
-          radial-gradient(circle at 80% 80%, rgba(139, 92, 246, 0.1) 0%, transparent 50%)
-        `,
-        pointerEvents: 'none',
-      }} />
-
-      {/* Card */}
-      <div style={{
-        position: 'relative',
-        zIndex: 10,
-        background: 'var(--bg-card)',
+        background: '#1a1d2e',
+        border: '1px solid #2d3148',
         borderRadius: '16px',
-        border: '1px solid var(--border)',
         padding: '40px',
-        maxWidth: '420px',
         width: '100%',
-        boxShadow: '0 20px 60px rgba(0, 0, 0, 0.3)',
+        maxWidth: '420px',
       }}>
-        {isLogin ? (
-          <LoginForm onSwitchToSignup={() => setIsLogin(false)} />
-        ) : (
-          <SignupForm onSwitchToLogin={() => setIsLogin(true)} />
-        )}
+        <div style={{ textAlign: 'center', marginBottom: '32px' }}>
+          <h1 style={{ color: '#fff', fontSize: '28px', marginBottom: '8px' }}>
+            MediAI
+          </h1>
+          <p style={{ color: '#94a3b8' }}>
+            {isLogin ? 'Sign in to your account' : 'Create your account'}
+          </p>
+        </div>
+
+        {isLogin 
+          ? <LoginForm onSwitch={() => setIsLogin(false)} />
+          : <SignupForm onSwitch={() => setIsLogin(true)} />
+        }
       </div>
     </div>
-  );
-};
-
-export default AuthPage;
+  )
+}

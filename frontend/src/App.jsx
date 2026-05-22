@@ -1,19 +1,36 @@
-import { Routes, Route, Navigate } from 'react-router-dom'
 import { useEffect } from 'react'
-import { useAuth } from './hooks/useAuth'
-import Navbar from './components/layout/Navbar'
+import { Routes, Route, Navigate } from 'react-router-dom'
+import { supabase } from './lib/supabaseClient'
+import useAuthStore from './store/authStore'
+import ProtectedRoute from './components/auth/ProtectedRoute'
 
-// Pages
 import LandingPage from './pages/LandingPage'
 import AuthPage from './pages/AuthPage'
 import DashboardPage from './pages/DashboardPage'
 import HistoryPage from './pages/HistoryPage'
 import ModelComparePage from './pages/ModelComparePage'
 import ProfilePage from './pages/ProfilePage'
-import ProtectedRoute from './components/auth/ProtectedRoute'
 
-function App() {
-  const { isAuthenticated, isLoading } = useAuth()
+export default function App() {
+  const { setUser, setSession, setLoading, isLoading } = useAuthStore()
+
+  useEffect(() => {
+    // Initialize auth state when app loads
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session)
+      setUser(session?.user ?? null)
+    })
+
+    // Listen for auth state changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        setSession(session)
+        setUser(session?.user ?? null)
+      }
+    )
+
+    return () => subscription.unsubscribe()
+  }, [setUser, setSession, setLoading])
 
   if (isLoading) {
     return (
@@ -22,62 +39,55 @@ function App() {
         justifyContent: 'center',
         alignItems: 'center',
         height: '100vh',
-        background: 'var(--bg-primary)',
+        background: '#0f1117',
+        color: '#6366f1',
+        fontSize: '18px'
       }}>
-        <div style={{
-          width: '40px',
-          height: '40px',
-          border: '3px solid var(--border)',
-          borderTop: '3px solid var(--accent)',
-          borderRadius: '50%',
-          animation: 'spin 1s linear infinite',
-        }} />
+        Loading...
       </div>
     )
   }
 
   return (
-    <div style={{ minHeight: '100vh', background: 'var(--bg-primary)' }}>
-      {isAuthenticated && <Navbar />}
-      <Routes>
-        <Route path="/" element={<LandingPage />} />
-        <Route path="/auth" element={<AuthPage />} />
-        <Route
-          path="/dashboard"
-          element={
-            <ProtectedRoute>
-              <DashboardPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/history"
-          element={
-            <ProtectedRoute>
-              <HistoryPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/models"
-          element={
-            <ProtectedRoute>
-              <ModelComparePage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/profile"
-          element={
-            <ProtectedRoute>
-              <ProfilePage />
-            </ProtectedRoute>
-          }
-        />
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
-    </div>
+    <Routes>
+      <Route path="/" element={<LandingPage />} />
+      <Route path="/auth" element={<AuthPage />} />
+      <Route
+        path="/dashboard"
+        element={
+          <ProtectedRoute>
+            <DashboardPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/history"
+        element={
+          <ProtectedRoute>
+            <HistoryPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/models"
+        element={
+          <ProtectedRoute>
+            <ModelComparePage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/profile"
+        element={
+          <ProtectedRoute>
+            <ProfilePage />
+          </ProtectedRoute>
+        }
+      />
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
   )
+}
 }
 
 export default App

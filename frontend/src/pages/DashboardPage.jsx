@@ -1,29 +1,44 @@
-import { useAuth } from '../hooks/useAuth';
-import { usePrediction } from '../hooks/usePrediction';
-import { useHistory } from '../hooks/useHistory';
-import usePredictionStore from '../store/predictionStore';
-import PageWrapper from '../components/layout/PageWrapper';
-import ImageUploader from '../components/upload/ImageUploader';
-import PredictionCard from '../components/prediction/PredictionCard';
-import ModelComparisonRow from '../components/prediction/ModelComparisonRow';
-import PredictionHistoryChart from '../components/charts/PredictionHistoryChart';
-import ModelLeaderboard from '../components/charts/ModelLeaderboard';
-import { Clock, TrendingUp, Zap } from 'lucide-react';
-import toast from 'react-hot-toast';
+import { useEffect } from 'react'
+import { useAuth } from '../hooks/useAuth'
+import { usePrediction } from '../hooks/usePrediction'
+import { useHistory } from '../hooks/useHistory'
+import usePredictionStore from '../store/predictionStore'
+import PageWrapper from '../components/layout/PageWrapper'
+import ImageUploader from '../components/upload/ImageUploader'
+import PredictionCard from '../components/prediction/PredictionCard'
+import ModelComparisonRow from '../components/prediction/ModelComparisonRow'
+import PredictionHistoryChart from '../components/charts/PredictionHistoryChart'
+import ModelLeaderboard from '../components/charts/ModelLeaderboard'
+import { Clock, TrendingUp, Zap } from 'lucide-react'
+import toast from 'react-hot-toast'
+import apiClient from '../lib/apiClient'
 
 const DashboardPage = () => {
-  const { user } = useAuth();
-  const { currentPrediction } = usePredictionStore();
-  const { predictions: historyPredictions, isLoading: historyLoading } = useHistory();
+  const { user } = useAuth()
+  const { currentPrediction } = usePredictionStore()
+  const { predictions: historyPredictions, isLoading: historyLoading } = useHistory()
+
+  // Test backend connection on mount
+  useEffect(() => {
+    apiClient.get('/models/')
+      .then(res => {
+        console.log('Backend connected:', res.data)
+        toast.success('Connected to AI backend')
+      })
+      .catch(err => {
+        console.error('Backend connection failed:', err)
+        toast.error('Cannot reach backend — is Django running?')
+      })
+  }, [])
 
   // Mock stats
   const stats = {
     totalPredictions: 24,
     lastPrediction: '2 hours ago',
     agreementRate: '87%',
-  };
+  }
 
-  const recentPredictions = historyPredictions.slice(0, 5);
+  const recentPredictions = historyPredictions.slice(0, 5)
 
   return (
     <PageWrapper>
@@ -57,7 +72,7 @@ const DashboardPage = () => {
                 gap: '12px',
                 marginBottom: '8px',
               }}>
-                <ZapIcon size={20} color="var(--accent)" />
+                <Zap size={20} color="var(--accent)" />
                 <span style={{
                   color: 'var(--text-secondary)',
                   fontSize: '12px',
