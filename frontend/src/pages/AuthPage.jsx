@@ -27,17 +27,21 @@ export default function AuthPage() {
 
     try {
       if (isLogin) {
+        console.log('Attempting login...')
         const { data, error } = await supabase.auth.signInWithPassword({
           email,
           password,
         })
         if (error) throw error
+        console.log('Login successful, waiting for auth state update...')
         toast.success('Welcome back!')
-        navigate('/dashboard', { replace: true })
+        // Don't navigate here - let the useEffect handle it when auth state updates
+        // Navigation will happen automatically when isAuthenticated changes
       } else {
         if (password !== confirmPassword) {
           throw new Error('Passwords do not match')
         }
+        console.log('Attempting signup...')
         const { error } = await supabase.auth.signUp({
           email,
           password,
@@ -47,6 +51,7 @@ export default function AuthPage() {
         setIsLogin(true)
       }
     } catch (error) {
+      console.error('Auth error:', error)
       toast.error(error.message || 'Something went wrong')
     } finally {
       setLoading(false)
