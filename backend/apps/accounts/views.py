@@ -1,34 +1,46 @@
-"""
-Views for the accounts app.
-"""
-
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
-from rest_framework import status
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from .models import UserProfile
 from .serializers import UserProfileSerializer
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class ProfileView(APIView):
-    """
-    Get the current authenticated user's profile.
-    
-    GET /api/auth/profile/ - Returns current user's profile
-    """
+    """Protected - requires valid JWT"""
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        """
-        Retrieve the current authenticated user's profile.
-        """
+        """GET /api/auth/profile/"""
         try:
-            profile = request.user.profile
-        except UserProfile.DoesNotExist:
-            return Response(
-                {'error': 'User profile not found'},
-                status=status.HTTP_404_NOT_FOUND
+            profile, created = UserProfile.objects.get_or_create(
+                user=request.user,
+                defaults={
+                    'supabase_uid': request.user.username,
+                }
             )
+            return Response({
+                'id': request.user.id,
+                'email': request.user.email,
+                'supabase_uid': request.user.username,
+                'total_predictions': profile.total_predictions,
+                'created_at': profile.created_at,
+                'is_authenticated': True,
+            })
+        except Exception as e:
+            logger.error(f"Profile error: {e}")
+            return Response({'error': str(e)}, status=500)
 
-        serializer = UserProfileSerializer(profile)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+
+class HealthCheckView(APIView):
+    """Public health check"""
+    permission_classes = [AllowAny]
+    authentication_classes = []
+
+    def get(self, request):
+        return Response({
+            'status': 'ok',
+            'message': 'Backend is running'
+        })
