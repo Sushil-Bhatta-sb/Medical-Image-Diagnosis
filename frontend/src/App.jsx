@@ -18,41 +18,44 @@ export default function App() {
     if (initDone.current) return
     initDone.current = true
 
+    console.log('🚀 App mounted - initializing auth...')
+
     // STEP 1: Get initial session
-    console.log('Getting initial session...')
     supabase.auth.getSession().then(({ data: { session }, error }) => {
       if (error) {
-        console.error('getSession error:', error)
+        console.error('❌ getSession error:', error)
         setInitialized()
         return
       }
-      console.log('Initial session from getSession:', session ? session.user?.email : 'none')
+      console.log('✅ Initial session:', session ? `${session.user?.email}` : 'none (not logged in)')
       setSession(session)
     })
 
     // STEP 2: Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
-        console.log('onAuthStateChange event:', event, 'user:', session?.user?.email)
+        console.log('📡 Auth event:', event, '→', session?.user?.email || 'no user')
 
-        // Handle all relevant events
         if (event === 'SIGNED_IN') {
-          console.log('SIGNED_IN - setting session')
+          console.log('✅ SIGNED_IN event - user logged in')
           setSession(session)
         } else if (event === 'SIGNED_OUT') {
-          console.log('SIGNED_OUT - clearing session')
+          console.log('✅ SIGNED_OUT event - user logged out')
           setSession(null)
         } else if (event === 'TOKEN_REFRESHED') {
-          console.log('TOKEN_REFRESHED - updating session')
+          console.log('✅ TOKEN_REFRESHED - refreshing session')
           setSession(session)
         } else if (event === 'USER_UPDATED') {
-          console.log('USER_UPDATED - updating session')
+          console.log('✅ USER_UPDATED - updating user')
           setSession(session)
         }
       }
     )
 
-    return () => subscription.unsubscribe()
+    return () => {
+      console.log('Cleaning up auth subscription')
+      subscription.unsubscribe()
+    }
   }, [setSession, setInitialized])
 
   return (

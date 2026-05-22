@@ -15,8 +15,9 @@ export default function AuthPage() {
 
   // If already logged in, redirect to dashboard
   useEffect(() => {
+    console.log('AuthPage: isAuthenticated:', isAuthenticated, 'isInitialized:', isInitialized)
     if (isInitialized && isAuthenticated) {
-      console.log('Already logged in - redirecting to dashboard')
+      console.log('✅ AuthPage: User already authenticated - redirecting to dashboard')
       navigate('/dashboard', { replace: true })
     }
   }, [isAuthenticated, isInitialized, navigate])
@@ -27,21 +28,26 @@ export default function AuthPage() {
 
     try {
       if (isLogin) {
-        console.log('Attempting login...')
+        console.log('Logging in with:', email)
         const { data, error } = await supabase.auth.signInWithPassword({
           email,
           password,
         })
         if (error) throw error
-        console.log('Login successful, waiting for auth state update...')
+        
+        console.log('Login successful! User:', data.user?.email)
         toast.success('Welcome back!')
-        // Don't navigate here - let the useEffect handle it when auth state updates
-        // Navigation will happen automatically when isAuthenticated changes
+        
+        // Wait a moment for auth state to update, then navigate
+        setTimeout(() => {
+          console.log('Navigating to dashboard after login')
+          navigate('/dashboard', { replace: true })
+        }, 500)
       } else {
         if (password !== confirmPassword) {
           throw new Error('Passwords do not match')
         }
-        console.log('Attempting signup...')
+        console.log('Signing up with:', email)
         const { error } = await supabase.auth.signUp({
           email,
           password,
