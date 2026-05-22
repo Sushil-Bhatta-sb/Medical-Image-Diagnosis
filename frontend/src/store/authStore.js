@@ -5,6 +5,7 @@ const useAuthStore = create((set) => ({
   session: null,
   isLoading: true,
   isAuthenticated: false,
+  isInitialized: false,
 
   setUser: (user) => set({ 
     user, 
@@ -13,9 +14,10 @@ const useAuthStore = create((set) => ({
   
   setSession: (session) => set({ 
     session, 
-    isAuthenticated: !!session,
     user: session?.user ?? null,
-    isLoading: false 
+    isAuthenticated: !!session?.user,
+    isLoading: false,
+    isInitialized: true
   }),
   
   setLoading: (isLoading) => set({ isLoading }),
@@ -24,7 +26,8 @@ const useAuthStore = create((set) => ({
     user: null, 
     session: null, 
     isAuthenticated: false,
-    isLoading: false 
+    isLoading: false,
+    isInitialized: true
   }),
 }))
 

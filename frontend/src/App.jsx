@@ -14,14 +14,21 @@ export default function App() {
   const { setSession } = useAuthStore()
 
   useEffect(() => {
-    // Get initial session when app loads
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    // Step 1: Check if there is an existing session immediately
+    supabase.auth.getSession().then(({ data: { session }, error }) => {
+      if (error) {
+        console.error('Session error:', error)
+        setSession(null)
+        return
+      }
+      console.log('Initial session check:', session ? 'logged in' : 'not logged in')
       setSession(session)
     })
 
-    // Listen for login/logout events
+    // Step 2: Listen for future auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (_event, session) => {
+      (event, session) => {
+        console.log('Auth event:', event)
         setSession(session)
       }
     )

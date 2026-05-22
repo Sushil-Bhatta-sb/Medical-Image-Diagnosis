@@ -26,25 +26,40 @@ export default function AuthPage() {
 
     try {
       if (isLogin) {
-        const { error } = await supabase.auth.signInWithPassword({
+        const { data, error } = await supabase.auth.signInWithPassword({
           email,
           password
         })
-        if (error) throw error
+        
+        if (error) {
+          if (error.message.includes('Invalid login credentials') || error.status === 400) {
+            throw new Error('Invalid email or password. If you just signed up, please check your email to confirm your account.')
+          }
+          throw error
+        }
+        
         toast.success('Welcome back!')
         navigate('/dashboard', { replace: true })
       } else {
         if (password !== confirmPassword) {
           throw new Error('Passwords do not match')
         }
-        const { error } = await supabase.auth.signUp({
+        const { data, error } = await supabase.auth.signUp({
           email,
           password
         })
         if (error) throw error
-        toast.success('Account created! Please check your email.')
+        
+        // Check if email confirmation is required
+        if (data?.user && !data.session) {
+          toast.success('Account created! Check your email to confirm your account.')
+        } else {
+          toast.success('Account created and logged in!')
+          navigate('/dashboard', { replace: true })
+        }
       }
     } catch (error) {
+      console.error('Auth error:', error)
       toast.error(error.message || 'Something went wrong')
     } finally {
       setLoading(false)
