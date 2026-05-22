@@ -1,21 +1,85 @@
-import { useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useState } from 'react'
-import LoginForm from '../components/auth/LoginForm'
-import SignupForm from '../components/auth/SignupForm'
+import { supabase } from '../lib/supabaseClient'
 import useAuthStore from '../store/authStore'
+import toast from 'react-hot-toast'
 
 export default function AuthPage() {
   const [isLogin, setIsLogin] = useState(true)
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
+  const [loading, setLoading] = useState(false)
   const navigate = useNavigate()
   const { isAuthenticated, isLoading } = useAuthStore()
 
-  // If already logged in redirect to dashboard
+  // Redirect if already logged in
   useEffect(() => {
     if (!isLoading && isAuthenticated) {
       navigate('/dashboard', { replace: true })
     }
   }, [isAuthenticated, isLoading, navigate])
+
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    setLoading(true)
+
+    try {
+      if (isLogin) {
+        const { error } = await supabase.auth.signInWithPassword({
+          email,
+          password
+        })
+        if (error) throw error
+        toast.success('Welcome back!')
+        navigate('/dashboard', { replace: true })
+      } else {
+        if (password !== confirmPassword) {
+          throw new Error('Passwords do not match')
+        }
+        const { error } = await supabase.auth.signUp({
+          email,
+          password
+        })
+        if (error) throw error
+        toast.success('Account created! Please check your email.')
+      }
+    } catch (error) {
+      toast.error(error.message || 'Something went wrong')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleGoogle = async () => {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: `${window.location.origin}/dashboard`
+      }
+    })
+    if (error) toast.error(error.message)
+  }
+
+  const inputStyle = {
+    width: '100%',
+    padding: '10px 14px',
+    background: '#0f1117',
+    border: '1px solid #2d3148',
+    borderRadius: '8px',
+    color: '#fff',
+    fontSize: '14px',
+    outline: 'none',
+    boxSizing: 'border-box',
+    marginTop: '6px'
+  }
+
+  const labelStyle = {
+    color: '#94a3b8',
+    fontSize: '14px',
+    display: 'block',
+    marginBottom: '16px'
+  }
 
   return (
     <div style={{
@@ -34,19 +98,119 @@ export default function AuthPage() {
         width: '100%',
         maxWidth: '420px',
       }}>
+        {/* Header */}
         <div style={{ textAlign: 'center', marginBottom: '32px' }}>
-          <h1 style={{ color: '#fff', fontSize: '28px', marginBottom: '8px' }}>
+          <h1 style={{
+            color: '#6366f1',
+            fontSize: '32px',
+            fontWeight: '700',
+            marginBottom: '8px'
+          }}>
             MediAI
           </h1>
-          <p style={{ color: '#94a3b8' }}>
+          <p style={{ color: '#94a3b8', fontSize: '15px' }}>
             {isLogin ? 'Sign in to your account' : 'Create your account'}
           </p>
         </div>
 
-        {isLogin 
-          ? <LoginForm onSwitch={() => setIsLogin(false)} />
-          : <SignupForm onSwitch={() => setIsLogin(true)} />
-        }
+        {/* Form */}
+        <form onSubmit={handleSubmit}>
+          <label style={labelStyle}>
+            Email
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              style={inputStyle}
+              placeholder="you@example.com"
+            />
+          </label>
+
+          <label style={labelStyle}>
+            Password
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              style={inputStyle}
+              placeholder="••••••••"
+            />
+          </label>
+
+          {!isLogin && (
+            <label style={labelStyle}>
+              Confirm Password
+              <input
+                type="password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                required
+                style={inputStyle}
+                placeholder="••••••••"
+              />
+            </label>
+          )}
+
+          <button
+            type="submit"
+            disabled={loading}
+            style={{
+              width: '100%',
+              padding: '12px',
+              background: '#6366f1',
+              border: 'none',
+              borderRadius: '8px',
+              color: '#fff',
+              fontSize: '15px',
+              fontWeight: '600',
+              cursor: loading ? 'not-allowed' : 'pointer',
+              marginBottom: '12px',
+              opacity: loading ? 0.7 : 1
+            }}
+          >
+            {loading
+              ? 'Please wait...'
+              : isLogin ? 'Sign In' : 'Create Account'}
+          </button>
+
+          <button
+            type="button"
+            onClick={handleGoogle}
+            style={{
+              width: '100%',
+              padding: '12px',
+              background: 'transparent',
+              border: '1px solid #2d3148',
+              borderRadius: '8px',
+              color: '#fff',
+              fontSize: '15px',
+              cursor: 'pointer',
+              marginBottom: '24px'
+            }}
+          >
+            Continue with Google
+          </button>
+
+          <p style={{
+            textAlign: 'center',
+            color: '#94a3b8',
+            fontSize: '14px'
+          }}>
+            {isLogin ? "Don't have an account? " : 'Already have an account? '}
+            <span
+              onClick={() => setIsLogin(!isLogin)}
+              style={{
+                color: '#6366f1',
+                cursor: 'pointer',
+                fontWeight: '600'
+              }}
+            >
+              {isLogin ? 'Sign up' : 'Sign in'}
+            </span>
+          </p>
+        </form>
       </div>
     </div>
   )
