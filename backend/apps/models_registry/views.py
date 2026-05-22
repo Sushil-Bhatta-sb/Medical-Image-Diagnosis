@@ -1,36 +1,48 @@
-"""
-Views for the models_registry app.
-"""
-
-from rest_framework.generics import ListAPIView, RetrieveAPIView
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework.permissions import AllowAny
 from .models import MLModel
-from .serializers import MLModelSerializer
+from .serializers import MLModelSerializer, ModelMetricsSerializer
+import logging
+
+logger = logging.getLogger(__name__)
 
 
-class MLModelListView(ListAPIView):
+class MLModelListView(APIView):
     """
-    List all active ML models in the registry.
-    
-    GET /api/models/ - Returns list of all active models
+    Public endpoint - no auth required.
+    Returns all active ML models.
     """
-    queryset = MLModel.objects.filter(is_active=True).prefetch_related('metrics')
-    serializer_class = MLModelSerializer
-    permission_classes = [IsAuthenticated]
-    pagination_class = None
+    permission_classes = [AllowAny]
+    authentication_classes = []
 
-    def get_queryset(self):
-        """Return all active models, ordered by creation date."""
-        return MLModel.objects.filter(is_active=True).prefetch_related('metrics').order_by('-created_at')
+    def get(self, request):
+        """GET /api/models/ - Returns list of all active models"""
+        try:
+            models = MLModel.objects.filter(is_active=True).order_by('-auc_roc')
+            serializer = MLModelSerializer(models, many=True)
+            return Response(serializer.data)
+        except Exception as e:
+            logger.error(f"Error fetching models: {e}")
+            return Response({'error': str(e)}, status=500)
 
 
-class MLModelDetailView(RetrieveAPIView):
+class MLModelDetailView(APIView):
     """
-    Retrieve a single ML model with all its training metrics.
-    
-    GET /api/models/<id>/ - Returns model details with metrics
+    Public endpoint - no auth required.
+    Returns single model with its metrics.
     """
-    queryset = MLModel.objects.prefetch_related('metrics')
-    serializer_class = MLModelSerializer
-    permission_classes = [IsAuthenticated]
-    lookup_field = 'id'
+    permission_classes = [AllowAny]
+    authentication_classes = []
+
+    def get(self, request, pk):
+        """GET /api/models/<id>/ - Returns model + metrics"""
+        try:
+            model = MLModel.objects.get(pk=pk, is_active=True)
+            serializer = MLModelSerializer(model)
+            return Response(serializer.data)
+        except MLModel.DoesNotExist:
+            return Response({'error': 'Model not found'}, status=404)
+        except Exception as e:
+            logger.error(f"Error fetching model {pk}: {e}")
+            return Response({'error': str(e)}, status=500)
