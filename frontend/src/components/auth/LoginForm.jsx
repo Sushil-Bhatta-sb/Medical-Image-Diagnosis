@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { supabase } from '../../lib/supabaseClient'
 import { useNavigate } from 'react-router-dom'
+import { useAuthStore } from '../../store/authStore'
 import toast from 'react-hot-toast'
 
 export default function LoginForm({ onSwitch }) {
@@ -8,19 +9,37 @@ export default function LoginForm({ onSwitch }) {
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const navigate = useNavigate()
+  const { setSession } = useAuthStore()
 
   const handleLogin = async (e) => {
     e.preventDefault()
     setLoading(true)
+    console.log('🔐 LoginForm: Attempting login with:', email)
     try {
       const { error } = await supabase.auth.signInWithPassword({
         email,
         password
       })
       if (error) throw error
+      
+      console.log('✅ LoginForm: Login successful, getting session...')
+      // Get the session immediately and update auth store
+      const { data: { session } } = await supabase.auth.getSession()
+      console.log('✅ LoginForm: Session retrieved:', session?.user?.email)
+      
+      // Update global auth state
+      setSession(session)
+      console.log('✅ LoginForm: Auth store updated, showing toast and redirecting...')
+      
       toast.success('Welcome back!')
-      navigate('/dashboard')
+      
+      // Small delay to ensure state updates before navigation
+      setTimeout(() => {
+        console.log('🚀 LoginForm: Navigating to dashboard')
+        navigate('/dashboard', { replace: true })
+      }, 100)
     } catch (error) {
+      console.error('❌ LoginForm: Login failed:', error.message)
       toast.error(error.message || 'Login failed')
     } finally {
       setLoading(false)
