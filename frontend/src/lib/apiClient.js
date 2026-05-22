@@ -6,35 +6,50 @@ const apiClient = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
+  timeout: 30000,
 })
 
-// Request interceptor - attach JWT token to every request
 apiClient.interceptors.request.use(
   async (config) => {
     try {
-      const { data: { session } } = await supabase.auth.getSession()
+      const { data: { session }, error } = await supabase.auth.getSession()
+      
+      if (error) {
+        console.error('Session error:', error)
+        return config
+      }
+      
       if (session?.access_token) {
         config.headers.Authorization = `Bearer ${session.access_token}`
-        console.log('Token attached:', session.access_token.substring(0, 20) + '...')
+        console.log('✅ Token attached to request:', config.url)
       } else {
-        console.warn('No session found - request will be unauthorized')
+        console.warn('⚠️ No session - request without token:', config.url)
       }
-    } catch (error) {
-      console.error('Error getting session:', error)
+    } catch (err) {
+      console.error('❌ Failed to get session:', err)
     }
     return config
   },
   (error) => Promise.reject(error)
 )
 
-// Response interceptor - handle auth errors
 apiClient.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    console.log(`✅ ${response.config.method?.toUpperCase()} ${response.config.url} → ${response.status}`)
+    return response
+  },
   async (error) => {
-    if (error.response?.status === 401) {
+    const status = error.response?.status
+    const url = error.config?.url
+    
+    console.error(`❌ ${error.config?.method?.toUpperCase()} ${url} → ${status}`)
+    
+    if (status === 401) {
+      console.warn('401 - signing out')
       await supabase.auth.signOut()
       window.location.href = '/auth'
     }
+    
     return Promise.reject(error)
   }
 )
