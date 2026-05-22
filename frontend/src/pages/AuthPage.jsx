@@ -11,14 +11,15 @@ export default function AuthPage() {
   const [confirmPassword, setConfirmPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const navigate = useNavigate()
-  const { isAuthenticated, isLoading } = useAuthStore()
+  const { isAuthenticated, isInitialized } = useAuthStore()
 
-  // Redirect if already logged in
+  // If already logged in, redirect to dashboard
   useEffect(() => {
-    if (!isLoading && isAuthenticated) {
+    if (isInitialized && isAuthenticated) {
+      console.log('Already logged in - redirecting to dashboard')
       navigate('/dashboard', { replace: true })
     }
-  }, [isAuthenticated, isLoading, navigate])
+  }, [isAuthenticated, isInitialized, navigate])
 
   const handleSubmit = async (e) => {
     e.preventDefault()
