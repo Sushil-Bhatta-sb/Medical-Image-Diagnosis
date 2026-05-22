@@ -20,14 +20,24 @@ const DashboardPage = () => {
 
   // Test backend connection on mount
   useEffect(() => {
+    // Test public endpoint first
     apiClient.get('/models/')
       .then(res => {
-        console.log('Backend connected successfully:', res.data)
-        toast.success('AI Backend connected!')
+        console.log('✅ Models loaded:', res.data.length, 'models')
+        toast.success(`Connected! ${res.data.length} AI models ready.`)
       })
       .catch(err => {
-        console.error('Backend error:', err.response?.status, err.message)
-        toast.error('Backend connection failed')
+        console.error('❌ Models failed:', err.message)
+        toast.error('Cannot reach backend')
+      })
+
+    // Test protected endpoint
+    apiClient.get('/auth/profile/')
+      .then(res => {
+        console.log('✅ Profile loaded:', res.data)
+      })
+      .catch(err => {
+        console.error('❌ Profile failed:', err.response?.status, err.message)
       })
   }, [])
 
