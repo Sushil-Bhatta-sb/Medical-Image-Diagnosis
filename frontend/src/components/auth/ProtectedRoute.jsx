@@ -4,9 +4,11 @@ import useAuthStore from '../../store/authStore'
 export default function ProtectedRoute({ children }) {
   const { isAuthenticated, isLoading, isInitialized } = useAuthStore()
 
-  // Show spinner ONLY while initializing
-  // This prevents redirect before auth state is known
-  if (!isInitialized || isLoading) {
+  console.log('ProtectedRoute check:', { isAuthenticated, isLoading, isInitialized })
+
+  // Show spinner while initializing
+  if (!isInitialized) {
+    console.log('Not initialized yet - showing spinner')
     return (
       <div style={{
         display: 'flex',
@@ -38,9 +40,12 @@ export default function ProtectedRoute({ children }) {
     )
   }
 
+  // After initialization, check if authenticated
   if (!isAuthenticated) {
+    console.log('Not authenticated - redirecting to /auth')
     return <Navigate to="/auth" replace />
   }
 
+  console.log('Authenticated - rendering protected page')
   return children
 }

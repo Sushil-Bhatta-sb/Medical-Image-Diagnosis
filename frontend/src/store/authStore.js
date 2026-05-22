@@ -15,12 +15,15 @@ const useAuthStore = create(
         isAuthenticated: !!user,
       }),
 
-      setSession: (session) => set({
-        session,
-        user: session?.user ?? null,
-        isAuthenticated: !!session?.user,
-        isLoading: false,
-        isInitialized: true,
+      setSession: (session) => set((state) => {
+        console.log('setSession called with:', session?.user?.email)
+        return {
+          session,
+          user: session?.user ?? null,
+          isAuthenticated: !!session?.user,
+          isLoading: false,
+          isInitialized: true,
+        }
       }),
 
       setLoading: (isLoading) => set({ isLoading }),
@@ -43,6 +46,7 @@ const useAuthStore = create(
       partialize: (state) => ({
         user: state.user,
         isAuthenticated: state.isAuthenticated,
+        isInitialized: state.isInitialized,
       }),
     }
   )
