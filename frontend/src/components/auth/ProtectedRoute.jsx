@@ -2,13 +2,13 @@ import { Navigate } from 'react-router-dom'
 import useAuthStore from '../../store/authStore'
 
 export default function ProtectedRoute({ children }) {
-  const { isAuthenticated, isLoading, isInitialized } = useAuthStore()
+  const { isAuthenticated, isInitialized } = useAuthStore()
 
-  console.log('ProtectedRoute check:', { isAuthenticated, isLoading, isInitialized })
+  console.log('ProtectedRoute:', { isAuthenticated, isInitialized })
 
-  // Show spinner while initializing
+  // CRITICAL: Show spinner until initialization is complete
   if (!isInitialized) {
-    console.log('Not initialized yet - showing spinner')
+    console.log('Auth not initialized yet - showing spinner')
     return (
       <div style={{
         display: 'flex',
@@ -28,7 +28,7 @@ export default function ProtectedRoute({ children }) {
           animation: 'spin 0.8s linear infinite',
         }} />
         <p style={{ color: '#94a3b8', fontSize: '14px' }}>
-          Loading...
+          Checking login...
         </p>
         <style>{`
           @keyframes spin {
@@ -46,6 +46,6 @@ export default function ProtectedRoute({ children }) {
     return <Navigate to="/auth" replace />
   }
 
-  console.log('Authenticated - rendering protected page')
+  console.log('Authenticated - rendering dashboard')
   return children
 }
