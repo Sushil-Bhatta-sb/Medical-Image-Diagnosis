@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { useAuth } from '../hooks/useAuth'
+import useAuthStore from '../store/authStore'
 import { usePrediction } from '../hooks/usePrediction'
 import { useHistory } from '../hooks/useHistory'
 import usePredictionStore from '../store/predictionStore'
@@ -14,7 +14,7 @@ import toast from 'react-hot-toast'
 import apiClient from '../lib/apiClient'
 
 const DashboardPage = () => {
-  const { user } = useAuth()
+  const { user } = useAuthStore()
   const { currentPrediction } = usePredictionStore()
   const { predictions: historyPredictions, isLoading: historyLoading } = useHistory()
 
@@ -22,12 +22,12 @@ const DashboardPage = () => {
   useEffect(() => {
     apiClient.get('/models/')
       .then(res => {
-        console.log('Backend connected:', res.data)
-        toast.success('Connected to AI backend')
+        console.log('Backend connected successfully:', res.data)
+        toast.success('AI Backend connected!')
       })
       .catch(err => {
-        console.error('Backend connection failed:', err)
-        toast.error('Cannot reach backend — is Django running?')
+        console.error('Backend error:', err.response?.status, err.message)
+        toast.error('Backend connection failed')
       })
   }, [])
 
