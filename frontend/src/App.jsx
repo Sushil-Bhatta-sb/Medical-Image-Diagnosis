@@ -18,33 +18,37 @@ export default function App() {
     if (initDone.current) return
     initDone.current = true
 
-    // STEP 1: Get session synchronously from storage first
+    // STEP 1: Get initial session
+    console.log('Getting initial session...')
     supabase.auth.getSession().then(({ data: { session }, error }) => {
       if (error) {
         console.error('getSession error:', error)
         setInitialized()
         return
       }
-      console.log('Initial session:', session ? session.user?.email : 'none')
+      console.log('Initial session from getSession:', session ? session.user?.email : 'none')
       setSession(session)
     })
 
-    // STEP 2: Listen for real auth changes only
+    // STEP 2: Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
-        console.log('Auth event:', event, session?.user?.email)
+        console.log('onAuthStateChange event:', event, 'user:', session?.user?.email)
 
-        // Only update on these specific events
+        // Handle all relevant events
         if (event === 'SIGNED_IN') {
+          console.log('SIGNED_IN - setting session')
           setSession(session)
         } else if (event === 'SIGNED_OUT') {
+          console.log('SIGNED_OUT - clearing session')
           setSession(null)
         } else if (event === 'TOKEN_REFRESHED') {
+          console.log('TOKEN_REFRESHED - updating session')
           setSession(session)
         } else if (event === 'USER_UPDATED') {
+          console.log('USER_UPDATED - updating session')
           setSession(session)
         }
-        // IGNORE: INITIAL_SESSION event - handled by getSession above
       }
     )
 
