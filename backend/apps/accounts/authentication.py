@@ -83,34 +83,3 @@ class SupabaseJWTAuthentication(BaseAuthentication):
 
     def authenticate_header(self, request):
         return 'Bearer realm="api"'
-                settings.SUPABASE_JWT_SECRET,
-                algorithms=['HS256']
-            )
-            
-        except jwt.ExpiredSignatureError:
-            raise AuthenticationFailed('Token has expired')
-        except jwt.InvalidTokenError as e:
-            raise AuthenticationFailed(f'Invalid token: {str(e)}')
-        
-        # Extract Supabase UID from payload
-        supabase_uid = payload.get('sub')
-        if not supabase_uid:
-            raise AuthenticationFailed('Invalid token payload: missing sub')
-        
-        # Get or create Django User
-        user, created = User.objects.get_or_create(
-            username=supabase_uid,
-            defaults={
-                'email': payload.get('email', ''),
-                'first_name': payload.get('name', '').split()[0] if payload.get('name') else '',
-            }
-        )
-        
-        # Create or update UserProfile with Supabase UID
-        from .models import UserProfile
-        profile, _ = UserProfile.objects.get_or_create(
-            user=user,
-            defaults={'supabase_uid': supabase_uid}
-        )
-        
-        return (user, payload)
