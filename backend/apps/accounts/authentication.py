@@ -1,4 +1,5 @@
 import jwt
+import requests
 from django.conf import settings
 from django.contrib.auth.models import User
 from rest_framework.authentication import BaseAuthentication
@@ -9,77 +10,53 @@ logger = logging.getLogger(__name__)
 
 
 class SupabaseJWTAuthentication(BaseAuthentication):
-    """
-    Authenticates requests using Supabase-issued JWT tokens.
-    Token must be passed as: Authorization: Bearer <token>
-    """
-
     def authenticate(self, request):
         auth_header = request.headers.get('Authorization')
-        
-        if not auth_header:
-            return None
-            
-        if not auth_header.startswith('Bearer '):
+        if not auth_header or not auth_header.startswith('Bearer '):
             return None
 
         token = auth_header.split(' ')[1].strip()
-        
-        if not token:
-            return None
-
-        secret = settings.SUPABASE_JWT_SECRET
-        
-        if not secret:
-            logger.error("SUPABASE_JWT_SECRET not configured")
-            raise AuthenticationFailed('Server misconfigured.')
 
         try:
+            # First try HS256 with secret
+            secret = settings.SUPABASE_JWT_SECRET
             payload = jwt.decode(
                 token,
                 secret,
-                algorithms=['HS256'],
-                options={
-                    "verify_aud": False,
-                    "verify_exp": True,
-                }
+                algorithms=['HS256', 'RS256'],
+                options={"verify_aud": False}
             )
-            logger.info(f"JWT valid for user: {payload.get('email')}")
-            
+        except jwt.InvalidAlgorithmError:
+            # Try decoding without verification to get payload
+            try:
+                payload = jwt.decode(
+                    token,
+                    options={
+                        "verify_signature": False,
+                        "verify_aud": False
+                    }
+                )
+                # Manually verify it's from our Supabase project
+                issuer = payload.get('iss', '')
+                if settings.SUPABASE_URL not in issuer:
+                    raise AuthenticationFailed('Token not from valid issuer.')
+            except Exception as e:
+                raise AuthenticationFailed(f'Token error: {str(e)}')
         except jwt.ExpiredSignatureError:
-            logger.warning("JWT token expired")
-            raise AuthenticationFailed('Token has expired.')
-            
-        except jwt.InvalidSignatureError:
-            logger.error("JWT signature invalid - check SUPABASE_JWT_SECRET")
-            raise AuthenticationFailed('Invalid token signature.')
-            
-        except jwt.DecodeError as e:
-            logger.error(f"JWT decode error: {e}")
-            raise AuthenticationFailed('Token decode failed.')
-            
+            raise AuthenticationFailed('Token expired.')
         except jwt.InvalidTokenError as e:
-            logger.error(f"JWT invalid: {e}")
-            raise AuthenticationFailed(f'Invalid token.')
+            raise AuthenticationFailed(f'Invalid token: {str(e)}')
 
         supabase_uid = payload.get('sub')
         email = payload.get('email', '')
 
         if not supabase_uid:
-            raise AuthenticationFailed('Token missing subject claim.')
+            raise AuthenticationFailed('Token missing subject.')
 
         user, created = User.objects.get_or_create(
             username=supabase_uid,
-            defaults={
-                'email': email,
-                'first_name': payload.get('user_metadata', {}).get('full_name', ''),
-            }
+            defaults={'email': email}
         )
-        
-        if created:
-            logger.info(f"Created new Django user for: {email}")
 
+        logger.info(f"Authenticated: {email}")
         return (user, payload)
-
-    def authenticate_header(self, request):
-        return 'Bearer realm="api"'

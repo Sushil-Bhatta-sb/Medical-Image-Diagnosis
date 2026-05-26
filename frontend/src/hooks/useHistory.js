@@ -1,21 +1,34 @@
-import { useQuery } from '@tanstack/react-query';
-import apiClient from '../lib/apiClient';
+import { useState, useEffect } from 'react'
+import apiClient from '../lib/apiClient'
 
-export const useHistory = () => {
-  const { data: predictions = [], isLoading, error, refetch } = useQuery({
-    queryKey: ['predictions', 'history'],
-    queryFn: async () => {
-      const response = await apiClient.get('/predictions/history/');
-      return response.data;
-    },
-    staleTime: 1000 * 60 * 5, // 5 minutes
-    gcTime: 1000 * 60 * 10, // 10 minutes (formerly cacheTime)
-  });
+export function useHistory() {
+  const [predictions, setPredictions] = useState([])
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState(null)
 
-  return {
-    predictions,
-    isLoading,
-    error,
-    refetch,
-  };
-};
+  useEffect(() => {
+    let cancelled = false
+
+    const fetchHistory = async () => {
+      setIsLoading(true)
+      try {
+        const res = await apiClient.get('/predictions/history/')
+        if (!cancelled) setPredictions(res.data)
+      } catch (err) {
+        if (!cancelled) {
+          console.error('History fetch failed:', err.response?.status)
+          setError(err)
+          setPredictions([])
+        }
+      } finally {
+        if (!cancelled) setIsLoading(false)
+      }
+    }
+
+    fetchHistory()
+
+    return () => { cancelled = true }
+  }, []) // only runs once
+
+  return { predictions, isLoading, error }
+}

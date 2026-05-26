@@ -57,15 +57,15 @@ export default function App() {
     })
 
     // Listen for changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        console.log('Auth change:', event)
-        if (event === 'SIGNED_IN') setSession(session)
-        if (event === 'SIGNED_OUT') setSession(null)
-        if (event === 'TOKEN_REFRESHED') setSession(session)
-      }
-    )
-
+const { data: { subscription } } = supabase.auth.onAuthStateChange(
+  (event, session) => {
+    console.log('Auth change:', event, session?.user?.email)
+    if (event === 'INITIAL_SESSION') setSession(session ?? null)
+    if (event === 'SIGNED_IN') setSession(session)
+    if (event === 'SIGNED_OUT') setSession(null)
+    if (event === 'TOKEN_REFRESHED') setSession(session)
+  }
+)
     return () => subscription.unsubscribe()
   }, [])
 

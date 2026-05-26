@@ -1,25 +1,43 @@
 import { useState } from 'react'
 import toast from 'react-hot-toast'
 
-export default function LoginForm({ onLogin, onSwitch, loading }) {
+export default function LoginForm({ onLogin, onGoogleLogin, onSwitch, loading }) {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [isLoading, setIsLoading] = useState(false)
+  const [localLoading, setLocalLoading] = useState(false)
+
+  // Use the parent's loading prop if provided, otherwise fallback to local state
+  const isComponentLoading = loading !== undefined ? loading : localLoading
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    setIsLoading(true)
+    setLocalLoading(true)
     try {
       await onLogin(email, password)
     } catch (error) {
       toast.error(error.message || 'Login failed')
     } finally {
-      setIsLoading(false)
+      setLocalLoading(false)
+    }
+  }
+
+  const handleGoogleSubmit = async (e) => {
+    e.preventDefault()
+    if (!onGoogleLogin) return
+    
+    setLocalLoading(true)
+    try {
+      await onGoogleLogin()
+    } catch (error) {
+      toast.error(error.message || 'Google login failed')
+    } finally {
+      setLocalLoading(false)
     }
   }
 
   return (
     <form onSubmit={handleSubmit}>
+      {/* Email Input */}
       <div style={{ marginBottom: '16px' }}>
         <label style={{
           color: '#94a3b8',
@@ -49,6 +67,7 @@ export default function LoginForm({ onLogin, onSwitch, loading }) {
         />
       </div>
 
+      {/* Password Input */}
       <div style={{ marginBottom: '24px' }}>
         <label style={{
           color: '#94a3b8',
@@ -78,9 +97,10 @@ export default function LoginForm({ onLogin, onSwitch, loading }) {
         />
       </div>
 
+      {/* Standard Email/Password Submit Button */}
       <button
         type="submit"
-        disabled={isLoading}
+        disabled={isComponentLoading}
         style={{
           width: '100%',
           padding: '12px',
@@ -90,14 +110,37 @@ export default function LoginForm({ onLogin, onSwitch, loading }) {
           color: '#fff',
           fontSize: '15px',
           fontWeight: '600',
-          cursor: isLoading ? 'not-allowed' : 'pointer',
+          cursor: isComponentLoading ? 'not-allowed' : 'pointer',
           marginBottom: '12px',
-          opacity: isLoading ? 0.7 : 1
+          opacity: isComponentLoading ? 0.7 : 1
         }}
       >
-        {isLoading ? 'Signing in...' : 'Sign In'}
+        {isComponentLoading ? 'Signing in...' : 'Sign In'}
       </button>
 
+      {/* "Continue with Google" Button */}
+      <button
+        type="button"
+        onClick={handleGoogleSubmit}
+        disabled={isComponentLoading}
+        style={{
+          width: '100%',
+          padding: '12px',
+          background: '#1e293b',
+          border: '1px solid #334155',
+          borderRadius: '8px',
+          color: '#fff',
+          fontSize: '15px',
+          fontWeight: '600',
+          cursor: isComponentLoading ? 'not-allowed' : 'pointer',
+          marginBottom: '24px',
+          opacity: isComponentLoading ? 0.7 : 1
+        }}
+      >
+        Continue with Google
+      </button>
+
+      {/* Toggle Link */}
       <p style={{
         textAlign: 'center',
         color: '#94a3b8',
@@ -111,23 +154,6 @@ export default function LoginForm({ onLogin, onSwitch, loading }) {
             cursor: 'pointer',
             fontWeight: '600'
           }}
-        >
-          Sign up
-        </span>
-      </p>
-    </form>
-  )
-}
-        }}
-      >
-        Continue with Google
-      </button>
-
-      <p style={{ textAlign: 'center', color: '#94a3b8', fontSize: '14px' }}>
-        No account?{' '}
-        <span
-          onClick={onSwitch}
-          style={{ color: '#6366f1', cursor: 'pointer', fontWeight: '600' }}
         >
           Sign up
         </span>

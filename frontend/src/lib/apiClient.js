@@ -44,11 +44,10 @@ apiClient.interceptors.response.use(
     
     console.error(`❌ ${error.config?.method?.toUpperCase()} ${url} → ${status}`)
     
-    if (status === 401) {
-      console.warn('401 - signing out')
-      await supabase.auth.signOut()
-      window.location.href = '/auth'
-    }
+if (status === 401) {
+  // Don't sign out on 401 - just reject the request
+  console.warn('401 on:', url, '- ignoring, not signing out')
+}
     
     return Promise.reject(error)
   }
