@@ -29,9 +29,8 @@ ReactDOM.createRoot(document.getElementById('root')).render(
             color: '#fff',
             border: '1px solid #2d3148',
           },
-          }}
-        />
-      </QueryClientProvider>
-    </BrowserRouter>
-  </React.StrictMode>
+        }}
+      />
+    </QueryClientProvider>
+  </BrowserRouter>
 )

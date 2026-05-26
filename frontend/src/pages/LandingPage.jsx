@@ -1,10 +1,9 @@
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../hooks/useAuth';
 import { Brain, Zap, BarChart3, CheckCircle2, ArrowRight } from 'lucide-react';
 
-const LandingPage = () => {
+const LandingPage = ({ session }) => {
   const navigate = useNavigate();
-  const { isAuthenticated } = useAuth();
+  const isAuthenticated = !!session;
 
   return (
     <div style={{ minHeight: '100vh', background: 'var(--bg-primary)' }}>
