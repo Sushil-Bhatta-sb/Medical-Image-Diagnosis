@@ -1,5 +1,4 @@
 import { useEffect } from 'react'
-import useAuthStore from '../store/authStore'
 import { usePrediction } from '../hooks/usePrediction'
 import { useHistory } from '../hooks/useHistory'
 import usePredictionStore from '../store/predictionStore'
@@ -13,8 +12,8 @@ import { Clock, TrendingUp, Zap } from 'lucide-react'
 import toast from 'react-hot-toast'
 import apiClient from '../lib/apiClient'
 
-const DashboardPage = () => {
-  const { user } = useAuthStore()
+const DashboardPage = ({ session }) => {
+  const user = session?.user
   const { currentPrediction } = usePredictionStore()
   const { predictions: historyPredictions, isLoading: historyLoading } = useHistory()
 
@@ -51,7 +50,7 @@ const DashboardPage = () => {
   const recentPredictions = historyPredictions.slice(0, 5)
 
   return (
-    <PageWrapper>
+    <PageWrapper session={session}>
       <div style={{ paddingTop: '20px' }}>
         {/* Welcome Section */}
         <section style={{ marginBottom: '40px' }}>

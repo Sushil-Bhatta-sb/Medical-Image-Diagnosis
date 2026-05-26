@@ -1,15 +1,15 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '../../hooks/useAuth';
+import { supabase } from '../../lib/supabaseClient';
 import { Menu, X, LogOut, Brain } from 'lucide-react';
 
-const Navbar = () => {
-  const { user, logout } = useAuth();
+const Navbar = ({ session }) => {
+  const user = session?.user
   const navigate = useNavigate();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const handleLogout = async () => {
-    await logout();
+    await supabase.auth.signOut();
     navigate('/auth');
   };
 

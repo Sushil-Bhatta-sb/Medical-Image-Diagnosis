@@ -4,7 +4,7 @@ import PageWrapper from '../components/layout/PageWrapper';
 import { Download, Search } from 'lucide-react';
 import toast from 'react-hot-toast';
 
-const HistoryPage = () => {
+const HistoryPage = ({ session }) => {
   const { predictions, isLoading } = useHistory();
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
@@ -45,7 +45,7 @@ const HistoryPage = () => {
   };
 
   return (
-    <PageWrapper>
+    <PageWrapper session={session}>
       <div style={{ paddingTop: '20px' }}>
         <h1 style={{
           color: 'var(--text-primary)',

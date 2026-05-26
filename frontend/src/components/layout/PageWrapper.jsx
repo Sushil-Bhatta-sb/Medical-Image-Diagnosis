@@ -1,12 +1,15 @@
 import { useState } from 'react';
 import Sidebar from './Sidebar';
+import Navbar from './Navbar';
 
-const PageWrapper = ({ children }) => {
+const PageWrapper = ({ children, session }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (
-    <div style={{ display: 'flex' }}>
-      <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+    <div style={{ display: 'flex', flexDirection: 'column' }}>
+      <Navbar session={session} />
+      <div style={{ display: 'flex' }}>
+        <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
       
       <main
         className="main-content-desktop"
@@ -52,6 +55,7 @@ const PageWrapper = ({ children }) => {
           {children}
         </div>
       </main>
+      </div>
     </div>
   );
 };

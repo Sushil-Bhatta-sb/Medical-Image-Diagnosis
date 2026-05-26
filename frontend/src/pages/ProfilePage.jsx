@@ -1,18 +1,15 @@
-import { useAuth } from '../hooks/useAuth';
 import { useHistory } from '../hooks/useHistory';
-import { useNavigate } from 'react-router-dom';
+import { supabase } from '../lib/supabaseClient';
 import PageWrapper from '../components/layout/PageWrapper';
 import { User, Calendar, Trash2, AlertCircle, LogOut } from 'lucide-react';
 import toast from 'react-hot-toast';
 
-const ProfilePage = () => {
-  const { user, logout } = useAuth();
+const ProfilePage = ({ session }) => {
+  const user = session?.user
   const { predictions } = useHistory();
-  const navigate = useNavigate();
 
   const handleLogout = async () => {
-    await logout();
-    navigate('/auth');
+    await supabase.auth.signOut();
   };
 
   const handleDeleteAccount = () => {
@@ -29,7 +26,7 @@ const ProfilePage = () => {
   const completedPredictions = predictions.filter((p) => p.status === 'COMPLETED').length;
 
   return (
-    <PageWrapper>
+    <PageWrapper session={session}>
       <div style={{ paddingTop: '20px', maxWidth: '800px' }}>
         <h1 style={{
           color: 'var(--text-primary)',

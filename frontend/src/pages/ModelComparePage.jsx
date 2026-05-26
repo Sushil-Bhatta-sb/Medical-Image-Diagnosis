@@ -3,9 +3,9 @@ import ModelLeaderboard from '../components/charts/ModelLeaderboard';
 import ROCCurveChart from '../components/charts/ROCCurveChart';
 import ConfusionMatrix from '../components/charts/ConfusionMatrix';
 
-const ModelComparePage = () => {
+const ModelComparePage = ({ session }) => {
   return (
-    <PageWrapper>
+    <PageWrapper session={session}>
       <div style={{ paddingTop: '20px' }}>
         <h1 style={{
           color: 'var(--text-primary)',

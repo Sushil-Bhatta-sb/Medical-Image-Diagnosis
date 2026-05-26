@@ -1,26 +1,14 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabaseClient'
-import useAuthStore from '../store/authStore'
 import toast from 'react-hot-toast'
 
-export default function AuthPage() {
+export default function AuthPage({ setSession }) {
   const [isLogin, setIsLogin] = useState(true)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [confirmPassword, setConfirmPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const navigate = useNavigate()
-  const { isAuthenticated, isInitialized } = useAuthStore()
-
-  // If already logged in, redirect to dashboard
-  useEffect(() => {
-    console.log('AuthPage: isAuthenticated:', isAuthenticated, 'isInitialized:', isInitialized)
-    if (isInitialized && isAuthenticated) {
-      console.log('✅ AuthPage: User already authenticated - redirecting to dashboard')
-      navigate('/dashboard', { replace: true })
-    }
-  }, [isAuthenticated, isInitialized, navigate])
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -28,26 +16,38 @@ export default function AuthPage() {
 
     try {
       if (isLogin) {
-        console.log('Logging in with:', email)
         const { data, error } = await supabase.auth.signInWithPassword({
           email,
-          password,
+          password
         })
         if (error) throw error
         
-        console.log('Login successful! User:', data.user?.email)
+        // Set session directly then navigate
+        setSession(data.session)
         toast.success('Welcome back!')
+        navigate('/dashboard', { replace: true })
         
-        // Wait a moment for auth state to update, then navigate
-        setTimeout(() => {
-          console.log('Navigating to dashboard after login')
-          navigate('/dashboard', { replace: true })
-        }, 500)
       } else {
-        if (password !== confirmPassword) {
-          throw new Error('Passwords do not match')
+        const { data, error } = await supabase.auth.signUp({
+          email,
+          password
+        })
+        if (error) throw error
+        
+        if (data.session) {
+          setSession(data.session)
+          navigate('/dashboard', { replace: true })
+        } else {
+          toast.success('Check your email to confirm your account!')
+          setIsLogin(true)
         }
-        console.log('Signing up with:', email)
+      }
+    } catch (error) {
+      toast.error(error.message)
+    } finally {
+      setLoading(false)
+    }
+  }
         const { error } = await supabase.auth.signUp({
           email,
           password,
