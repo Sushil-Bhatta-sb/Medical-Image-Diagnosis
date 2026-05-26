@@ -1,109 +1,115 @@
-import { useState, useCallback } from 'react';
-import { supabase } from '../lib/supabaseClient';
-import apiClient from '../lib/apiClient';
-import usePredictionStore from '../store/predictionStore';
-import toast from 'react-hot-toast';
+import { useState, useCallback, useRef } from 'react'
+import { supabase } from '../lib/supabaseClient'
+import apiClient from '../lib/apiClient'
+import usePredictionStore from '../store/predictionStore'
+import toast from 'react-hot-toast'
 
 export const usePrediction = () => {
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const { 
-    setPrediction, 
-    setIsAnalyzing: storeSetIsAnalyzing, 
-    setPollingInterval,
-    pollingInterval,
-    addToHistory 
-  } = usePredictionStore();
+  const [isAnalyzing, setIsAnalyzing] = useState(false)
+  const { setPrediction, setIsAnalyzing: storeSetIsAnalyzing } = usePredictionStore()
+  const intervalRef = useRef(null)
+  const timeoutRef = useRef(null)
+
+  const stopPolling = useCallback(() => {
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current)
+      intervalRef.current = null
+    }
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current)
+      timeoutRef.current = null
+    }
+    setIsAnalyzing(false)
+    storeSetIsAnalyzing(false)
+  }, [storeSetIsAnalyzing])
 
   const submitImage = useCallback(async (imageFile) => {
-    try {
-      setIsAnalyzing(true);
-      storeSetIsAnalyzing(true);
+    // Stop any existing polling first
+    stopPolling()
 
-      // 1. Upload file to Supabase Storage
-      const fileExtension = imageFile.name.split('.').pop();
-      const fileName = `${Date.now()}.${fileExtension}`;
-      const { data: uploadData, error: uploadError } = await supabase.storage
+    try {
+      setIsAnalyzing(true)
+      storeSetIsAnalyzing(true)
+
+      // 1. Upload to Supabase Storage
+      const fileExtension = imageFile.name.split('.').pop()
+      const fileName = `${Date.now()}.${fileExtension}`
+      const filePath = `predictions/${fileName}`
+
+      const { error: uploadError } = await supabase.storage
         .from('xray-images')
-        .upload(`predictions/${fileName}`, imageFile);
+        .upload(filePath, imageFile)
 
       if (uploadError) {
-        toast.error('Failed to upload image');
-        setIsAnalyzing(false);
-        storeSetIsAnalyzing(false);
-        return { error: uploadError };
+        toast.error('Failed to upload image: ' + uploadError.message)
+        stopPolling()
+        return
       }
 
       // 2. Get public URL
       const { data: { publicUrl } } = supabase.storage
         .from('xray-images')
-        .getPublicUrl(`predictions/${fileName}`);
+        .getPublicUrl(filePath)
 
-      // 3. POST to API to create prediction
-      const { data: predictionData, error: predictionError } = await apiClient.post(
-        '/predictions/',
-        { image_url: publicUrl }
-      );
+      console.log('Image uploaded:', publicUrl)
 
-      if (predictionError) {
-        toast.error('Failed to submit prediction');
-        setIsAnalyzing(false);
-        storeSetIsAnalyzing(false);
-        return { error: predictionError };
-      }
+      // 3. Create prediction in Django
+      const response = await apiClient.post('/predictions/', {
+        image_url: publicUrl
+      })
 
-      setPrediction(predictionData);
-      toast.loading('Analyzing image...');
+      const predictionId = response.data.id
+      setPrediction(response.data)
+      toast.loading('Analyzing...', { id: 'analyzing' })
 
-      // 4. Start polling for results
-      const pollPrediction = async () => {
+      console.log('Prediction created:', predictionId)
+
+      // 4. Poll for results - using ref so we can clear it
+      intervalRef.current = setInterval(async () => {
         try {
-          const { data: updatedPrediction } = await apiClient.get(
-            `/predictions/${predictionData.id}/`
-          );
+          const pollResponse = await apiClient.get(
+            `/predictions/${predictionId}/`
+          )
+          const updated = pollResponse.data
+          
+          console.log('Poll result:', updated.status)
+          setPrediction(updated)
 
-          setPrediction(updatedPrediction);
-
-          // 5. Stop polling when complete or failed
-          if (updatedPrediction.status === 'COMPLETED' || updatedPrediction.status === 'FAILED') {
-            if (updatedPrediction.status === 'COMPLETED') {
-              addToHistory(updatedPrediction);
-              toast.dismiss();
-              toast.success('Analysis complete!');
-            } else {
-              toast.dismiss();
-              toast.error('Analysis failed');
-            }
-            
-            setIsAnalyzing(false);
-            storeSetIsAnalyzing(false);
-            
-            if (pollingInterval) {
-              clearInterval(pollingInterval);
-              setPollingInterval(null);
-            }
-            return;
+          if (updated.status === 'COMPLETED') {
+            stopPolling()
+            toast.dismiss('analyzing')
+            toast.success('Analysis complete!')
+            return
           }
+
+          if (updated.status === 'FAILED') {
+            stopPolling()
+            toast.dismiss('analyzing')
+            toast.error('Analysis failed: ' + (updated.error_message || 'Unknown error'))
+            return
+          }
+
         } catch (err) {
-          console.error('Polling error:', err);
+          console.error('Polling error:', err)
+          stopPolling()
+          toast.dismiss('analyzing')
+          toast.error('Polling failed')
         }
-      };
+      }, 2000)
 
-      // Poll every 2 seconds
-      const interval = setInterval(pollPrediction, 2000);
-      setPollingInterval(interval);
+      // 5. Safety timeout after 30 seconds
+      timeoutRef.current = setTimeout(() => {
+        stopPolling()
+        toast.dismiss('analyzing')
+        toast.error('Analysis timed out')
+      }, 30000)
 
-      return { data: predictionData };
     } catch (err) {
-      const message = err.message || 'Failed to analyze image';
-      toast.error(message);
-      setIsAnalyzing(false);
-      storeSetIsAnalyzing(false);
-      return { error: err };
+      console.error('Submit error:', err)
+      toast.error(err.message || 'Failed to analyze image')
+      stopPolling()
     }
-  }, [setPrediction, storeSetIsAnalyzing, setPollingInterval, pollingInterval, addToHistory]);
+  }, [setPrediction, storeSetIsAnalyzing, stopPolling])
 
-  return {
-    submitImage,
-    isAnalyzing,
-  };
-};
+  return { submitImage, isAnalyzing }
+}
