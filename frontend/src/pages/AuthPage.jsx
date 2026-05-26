@@ -48,37 +48,8 @@ export default function AuthPage({ setSession }) {
       setLoading(false)
     }
   }
-        const { error } = await supabase.auth.signUp({
-          email,
-          password,
-        })
-        if (error) throw error
-        toast.success('Account created! You can now sign in.')
-        setIsLogin(true)
-      }
-    } catch (error) {
-      console.error('Auth error:', error)
-      toast.error(error.message || 'Something went wrong')
-    } finally {
-      setLoading(false)
-    }
-  }
 
-  const handleGoogle = async () => {
-    try {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo: `${window.location.origin}/dashboard`,
-        },
-      })
-      if (error) throw error
-    } catch (error) {
-      toast.error(error.message)
-    }
-  }
-
-  const inputStyle = {
+  const input = {
     width: '100%',
     padding: '10px 14px',
     background: '#0f1117',
@@ -88,13 +59,8 @@ export default function AuthPage({ setSession }) {
     fontSize: '14px',
     outline: 'none',
     boxSizing: 'border-box',
-    marginTop: '6px'
-  }
-
-  const labelStyle = {
-    color: '#94a3b8',
-    fontSize: '14px',
     display: 'block',
+    marginTop: '6px',
     marginBottom: '16px'
   }
 
@@ -113,62 +79,49 @@ export default function AuthPage({ setSession }) {
         borderRadius: '16px',
         padding: '40px',
         width: '100%',
-        maxWidth: '420px',
+        maxWidth: '400px'
       }}>
-        {/* Header */}
-        <div style={{ textAlign: 'center', marginBottom: '32px' }}>
-          <h1 style={{
-            color: '#6366f1',
-            fontSize: '32px',
-            fontWeight: '700',
-            marginBottom: '8px'
-          }}>
-            MediAI
-          </h1>
-          <p style={{ color: '#94a3b8', fontSize: '15px' }}>
-            {isLogin ? 'Sign in to your account' : 'Create your account'}
-          </p>
-        </div>
+        <h1 style={{
+          color: '#6366f1',
+          textAlign: 'center',
+          fontSize: '28px',
+          marginBottom: '8px'
+        }}>
+          MediAI
+        </h1>
+        <p style={{
+          color: '#94a3b8',
+          textAlign: 'center',
+          marginBottom: '32px',
+          fontSize: '14px'
+        }}>
+          {isLogin ? 'Sign in to continue' : 'Create your account'}
+        </p>
 
-        {/* Form */}
         <form onSubmit={handleSubmit}>
-          <label style={labelStyle}>
+          <label style={{ color: '#94a3b8', fontSize: '13px' }}>
             Email
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              style={inputStyle}
-              placeholder="you@example.com"
-            />
           </label>
+          <input
+            type="email"
+            value={email}
+            onChange={e => setEmail(e.target.value)}
+            placeholder="you@example.com"
+            required
+            style={input}
+          />
 
-          <label style={labelStyle}>
+          <label style={{ color: '#94a3b8', fontSize: '13px' }}>
             Password
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              style={inputStyle}
-              placeholder="••••••••"
-            />
           </label>
-
-          {!isLogin && (
-            <label style={labelStyle}>
-              Confirm Password
-              <input
-                type="password"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                required
-                style={inputStyle}
-                placeholder="••••••••"
-              />
-            </label>
-          )}
+          <input
+            type="password"
+            value={password}
+            onChange={e => setPassword(e.target.value)}
+            placeholder="••••••••"
+            required
+            style={input}
+          />
 
           <button
             type="submit"
@@ -182,52 +135,29 @@ export default function AuthPage({ setSession }) {
               color: '#fff',
               fontSize: '15px',
               fontWeight: '600',
-              cursor: loading ? 'not-allowed' : 'pointer',
+              cursor: 'pointer',
               marginBottom: '12px',
               opacity: loading ? 0.7 : 1
             }}
           >
-            {loading
-              ? 'Please wait...'
-              : isLogin ? 'Sign In' : 'Create Account'}
+            {loading ? 'Please wait...' : isLogin ? 'Sign In' : 'Sign Up'}
           </button>
-
-          <button
-            type="button"
-            onClick={handleGoogle}
-            style={{
-              width: '100%',
-              padding: '12px',
-              background: 'transparent',
-              border: '1px solid #2d3148',
-              borderRadius: '8px',
-              color: '#fff',
-              fontSize: '15px',
-              cursor: 'pointer',
-              marginBottom: '24px'
-            }}
-          >
-            Continue with Google
-          </button>
-
-          <p style={{
-            textAlign: 'center',
-            color: '#94a3b8',
-            fontSize: '14px'
-          }}>
-            {isLogin ? "Don't have an account? " : 'Already have an account? '}
-            <span
-              onClick={() => setIsLogin(!isLogin)}
-              style={{
-                color: '#6366f1',
-                cursor: 'pointer',
-                fontWeight: '600'
-              }}
-            >
-              {isLogin ? 'Sign up' : 'Sign in'}
-            </span>
-          </p>
         </form>
+
+        <p style={{
+          textAlign: 'center',
+          color: '#94a3b8',
+          fontSize: '14px',
+          marginTop: '16px'
+        }}>
+          {isLogin ? "No account? " : "Have account? "}
+          <span
+            onClick={() => setIsLogin(!isLogin)}
+            style={{ color: '#6366f1', cursor: 'pointer', fontWeight: '600' }}
+          >
+            {isLogin ? 'Sign up' : 'Sign in'}
+          </span>
+        </p>
       </div>
     </div>
   )
