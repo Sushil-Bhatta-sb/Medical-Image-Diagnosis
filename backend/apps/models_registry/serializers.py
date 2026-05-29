@@ -1,6 +1,3 @@
-"""
-Serializers for the models_registry app.
-"""
 
 from rest_framework import serializers
 from .models import MLModel, ModelMetrics
