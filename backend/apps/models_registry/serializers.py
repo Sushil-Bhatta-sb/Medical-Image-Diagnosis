@@ -2,7 +2,7 @@
 from rest_framework import serializers
 from .models import MLModel, ModelMetrics
 
-
+# sdjfk ;aoijsgdk ;gnk
 class ModelMetricsSerializer(serializers.ModelSerializer):
     """Serializes training metrics for a specific model."""
     class Meta:
