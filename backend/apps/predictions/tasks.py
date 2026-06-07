@@ -6,11 +6,7 @@ logger = logging.getLogger(__name__)
 
 MOCK_MODE = True
 
-CLASS_LABELS = [
-    'Atelectasis', 'Cardiomegaly', 'Effusion',
-    'Infiltration', 'Mass', 'Nodule',
-    'Pneumonia', 'Pneumothorax', 'Normal'
-]
+CLASS_LABELS = ['NORMAL', 'PNEUMONIA']
 
 
 def run_inference(prediction_id):
