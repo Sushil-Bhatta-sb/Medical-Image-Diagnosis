@@ -342,7 +342,7 @@ def train():
         lr=LEARNING_RATE
     )
     scheduler = optim.lr_scheduler.ReduceLROnPlateau(
-        optimizer, mode='max', factor=0.5, patience=2, verbose=True
+        optimizer, mode='max', factor=0.5, patience=2
     )
     
     # Training loop

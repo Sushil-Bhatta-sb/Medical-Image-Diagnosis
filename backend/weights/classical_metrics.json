@@ -1,0 +1,23 @@
+{
+  "best_model": "SVM",
+  "models": {
+    "SVM": {
+      "accuracy": 0.7724,
+      "auc_roc": 0.9308,
+      "f1_score": 0.8453
+    },
+    "RandomForest": {
+      "accuracy": 0.742,
+      "auc_roc": 0.9188,
+      "f1_score": 0.8282
+    }
+  },
+  "trained_at": "2026-06-09T08:09:56.027638",
+  "config": {
+    "image_size": 128,
+    "max_samples": null,
+    "svm_c": 1.0,
+    "svm_kernel": "rbf",
+    "rf_n_estimators": 100
+  }
+}
