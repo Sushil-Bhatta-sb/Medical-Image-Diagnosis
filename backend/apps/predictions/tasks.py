@@ -4,7 +4,7 @@ from django.utils import timezone
 
 logger = logging.getLogger(__name__)
 
-MOCK_MODE =False
+MOCK_MODE = True
 
 CLASS_LABELS = ['NORMAL', 'PNEUMONIA']
 
