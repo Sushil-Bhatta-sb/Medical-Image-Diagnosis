@@ -1,7 +1,18 @@
 import { useNavigate, useLocation } from 'react-router-dom'
 import { supabase } from '../../lib/supabaseClient'
-import { Brain, LogOut, User } from 'lucide-react'
+import { Brain, LogOut, LayoutDashboard, Clock, BarChart2, User } from 'lucide-react'
 import toast from 'react-hot-toast'
+
+const C = {
+  surface: '#ffffff',
+  border: '#edeff5',
+  ink: '#1f2433',
+  ink2: '#6b7280',
+  teal: '#14b8a6',
+  tealSoft: '#dcf7f3',
+  red: '#ef4444',
+  redSoft: '#fee2e2',
+}
 
 export default function Navbar({ session }) {
   const navigate = useNavigate()
@@ -15,25 +26,24 @@ export default function Navbar({ session }) {
   }
 
   const navLinks = [
-    { path: '/dashboard', label: 'Dashboard' },
-    { path: '/history', label: 'History' },
-    { path: '/models', label: 'Models' },
-    { path: '/profile', label: 'Profile' },
+    { path: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+    { path: '/history', label: 'History', icon: Clock },
+    { path: '/models', label: 'Models', icon: BarChart2 },
+    { path: '/profile', label: 'Profile', icon: User },
   ]
 
   return (
-    <nav style={{
-      height: '60px',
-      background: 'rgba(6,11,20,0.98)',
-      borderBottom: '1px solid #1e293b',
+    <aside style={{
+      width: '240px',
+      minWidth: '240px',
+      height: '100vh',
+      background: C.surface,
+      borderRight: `1px solid ${C.border}`,
       display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      padding: '0 32px',
+      flexDirection: 'column',
+      padding: '24px 16px',
       position: 'sticky',
       top: 0,
-      zIndex: 100,
-      backdropFilter: 'blur(10px)',
     }}>
       {/* Logo */}
       <div
@@ -41,95 +51,116 @@ export default function Navbar({ session }) {
         style={{
           display: 'flex',
           alignItems: 'center',
-          gap: '8px',
+          gap: '10px',
           cursor: 'pointer',
+          padding: '4px 8px',
+          marginBottom: '28px',
         }}
       >
-        <Brain size={22} color="#00d4ff" />
+        <div style={{
+          width: '36px',
+          height: '36px',
+          borderRadius: '10px',
+          background: C.tealSoft,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}>
+          <Brain size={20} color={C.teal} />
+        </div>
         <span style={{
-          fontSize: '18px',
+          fontSize: '19px',
           fontWeight: '800',
-          background: 'linear-gradient(135deg, #00d4ff, #7c3aed)',
-          WebkitBackgroundClip: 'text',
-          WebkitTextFillColor: 'transparent',
+          color: C.ink,
+          letterSpacing: '-0.5px',
         }}>
           MediAI
         </span>
       </div>
 
       {/* Nav links */}
-      <div style={{
+      <nav style={{
         display: 'flex',
+        flexDirection: 'column',
         gap: '4px',
+        flex: 1,
       }}>
-        {navLinks.map(link => (
-          <button
-            key={link.path}
-            onClick={() => navigate(link.path)}
-            style={{
-              padding: '8px 16px',
-              background: location.pathname === link.path
-                ? 'rgba(0,212,255,0.1)' : 'transparent',
-              color: location.pathname === link.path
-                ? '#00d4ff' : '#64748b',
-              border: 'none',
-              borderRadius: '8px',
-              cursor: 'pointer',
-              fontWeight: '600',
-              fontSize: '14px',
-              transition: 'all 0.2s',
-            }}
-            onMouseEnter={e => {
-              if (location.pathname !== link.path) {
-                e.target.style.color = '#94a3b8'
-                e.target.style.background = 'rgba(255,255,255,0.05)'
-              }
-            }}
-            onMouseLeave={e => {
-              if (location.pathname !== link.path) {
-                e.target.style.color = '#64748b'
-                e.target.style.background = 'transparent'
-              }
-            }}
-          >
-            {link.label}
-          </button>
-        ))}
-      </div>
+        {navLinks.map(({ path, label, icon: Icon }) => {
+          const active = location.pathname === path
+          return (
+            <button
+              key={path}
+              onClick={() => navigate(path)}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '12px',
+                padding: '11px 14px',
+                background: active ? C.tealSoft : 'transparent',
+                color: active ? C.teal : C.ink2,
+                border: 'none',
+                borderRadius: '10px',
+                cursor: 'pointer',
+                fontWeight: active ? '700' : '500',
+                fontSize: '14px',
+                textAlign: 'left',
+                transition: 'all 0.15s',
+              }}
+              onMouseEnter={e => {
+                if (!active) {
+                  e.currentTarget.style.background = '#f5f6fb'
+                  e.currentTarget.style.color = C.ink
+                }
+              }}
+              onMouseLeave={e => {
+                if (!active) {
+                  e.currentTarget.style.background = 'transparent'
+                  e.currentTarget.style.color = C.ink2
+                }
+              }}
+            >
+              <Icon size={18} />
+              {label}
+            </button>
+          )
+        })}
+      </nav>
 
       {/* User info + logout */}
       <div style={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: '12px',
+        borderTop: `1px solid ${C.border}`,
+        paddingTop: '16px',
+        marginTop: '16px',
       }}>
         <div style={{
           display: 'flex',
           alignItems: 'center',
-          gap: '8px',
-          background: '#0f1629',
-          border: '1px solid #1e293b',
-          borderRadius: '8px',
-          padding: '6px 12px',
+          gap: '10px',
+          padding: '8px',
+          marginBottom: '8px',
         }}>
           <div style={{
-            width: '28px',
-            height: '28px',
+            width: '34px',
+            height: '34px',
+            minWidth: '34px',
             borderRadius: '50%',
-            background: 'linear-gradient(135deg, #00d4ff, #7c3aed)',
+            background: C.teal,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            fontSize: '12px',
+            fontSize: '14px',
             fontWeight: '800',
             color: '#fff',
           }}>
             {user?.email?.charAt(0).toUpperCase()}
           </div>
           <span style={{
-            color: '#94a3b8',
+            color: C.ink,
             fontSize: '13px',
-            fontWeight: '500',
+            fontWeight: '600',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap',
           }}>
             {user?.email?.split('@')[0]}
           </span>
@@ -137,33 +168,36 @@ export default function Navbar({ session }) {
         <button
           onClick={handleLogout}
           style={{
-            padding: '8px 12px',
+            width: '100%',
+            padding: '10px 14px',
             background: 'transparent',
-            border: '1px solid #1e293b',
-            borderRadius: '8px',
-            color: '#64748b',
+            border: `1px solid ${C.border}`,
+            borderRadius: '10px',
+            color: C.ink2,
             cursor: 'pointer',
             display: 'flex',
             alignItems: 'center',
-            gap: '6px',
+            gap: '8px',
             fontSize: '13px',
             fontWeight: '600',
-            transition: 'all 0.2s',
+            transition: 'all 0.15s',
           }}
           onMouseEnter={e => {
-            e.currentTarget.style.borderColor = '#ef4444'
-            e.currentTarget.style.color = '#ef4444'
+            e.currentTarget.style.background = C.redSoft
+            e.currentTarget.style.borderColor = C.red
+            e.currentTarget.style.color = C.red
           }}
           onMouseLeave={e => {
-            e.currentTarget.style.borderColor = '#1e293b'
-            e.currentTarget.style.color = '#64748b'
+            e.currentTarget.style.background = 'transparent'
+            e.currentTarget.style.borderColor = C.border
+            e.currentTarget.style.color = C.ink2
           }}
         >
-          <LogOut size={14} />
+          <LogOut size={15} />
           Logout
         </button>
       </div>
-    </nav>
+    </aside>
   )
 }
 

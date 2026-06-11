@@ -146,7 +146,7 @@ export default function DashboardPage({ session }) {
 
   return (
     <PageWrapper session={session}>
-      <div style={{ background: C.pageBg, minHeight: '100vh', borderRadius: '20px', padding: '28px', fontFamily: 'Inter, system-ui, sans-serif' }}>
+      <div style={{ background: C.pageBg, minHeight: '100vh', padding: '4px', fontFamily: 'Inter, system-ui, sans-serif' }}>
 
         {/* Header */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '28px', flexWrap: 'wrap', gap: '16px' }}>
