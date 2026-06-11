@@ -1,13 +1,39 @@
-import { useEffect, useState } from 'react'
-import { Activity, Clock, TrendingUp, CheckCircle, XCircle, AlertCircle, Shield } from 'lucide-react'
+import { useEffect, useMemo, useState } from 'react'
+import {
+  Activity, Droplet, Stethoscope, ScanLine,
+  CheckCircle, XCircle, AlertCircle, Shield, ChevronDown
+} from 'lucide-react'
+import {
+  AreaChart, Area, BarChart, Bar, XAxis, YAxis,
+  CartesianGrid, Tooltip, ResponsiveContainer
+} from 'recharts'
 import PageWrapper from '../components/layout/PageWrapper'
 import ImageUploader from '../components/upload/ImageUploader'
-import PredictionHistoryChart from '../components/charts/PredictionHistoryChart'
 import ModelLeaderboard from '../components/charts/ModelLeaderboard'
 import { useHistory } from '../hooks/useHistory'
 import usePredictionStore from '../store/predictionStore'
 import apiClient from '../lib/apiClient'
 import toast from 'react-hot-toast'
+
+/* ---------- Soft pastel palette ---------- */
+const C = {
+  pageBg: '#f5f6fb',
+  card: '#ffffff',
+  border: '#edeff5',
+  ink: '#1f2433',
+  ink2: '#6b7280',
+  ink3: '#9aa1b2',
+  amber: '#f59e0b',
+  amberSoft: '#fef3e2',
+  coral: '#f43f5e',
+  coralSoft: '#fde7ee',
+  teal: '#14b8a6',
+  tealSoft: '#dcf7f3',
+  green: '#16a34a',
+  greenSoft: '#dcfce7',
+  red: '#ef4444',
+  redSoft: '#fee2e2',
+}
 
 export default function DashboardPage({ session }) {
   const user = session?.user
@@ -17,186 +43,275 @@ export default function DashboardPage({ session }) {
 
   useEffect(() => {
     apiClient.get('/models/')
-      .then(() => {
-        setBackendStatus('connected')
-      })
+      .then(() => setBackendStatus('connected'))
       .catch(() => {
         setBackendStatus('error')
         toast.error('AI engine connection dropped')
       })
   }, [])
 
+  /* ---------- Derived metrics ---------- */
+  const completed = useMemo(
+    () => predictions?.filter(p => p.status === 'COMPLETED') || [],
+    [predictions]
+  )
+
   const totalPredictions = predictions?.length || 0
-  const lastDate = predictions?.[0]?.created_at
-    ? new Date(predictions[0].created_at).toLocaleDateString()
-    : 'No scans run'
-  
-  const completed = predictions?.filter(p => p.status === 'COMPLETED') || []
+
   const agreed = completed.filter(
     p => p.cnn_prediction === p.vit_prediction && p.vit_prediction === p.classical_prediction
   )
-  const agreementRate = completed.length > 0 ? Math.round((agreed.length / completed.length) * 100) : 0
+  const agreementRate = completed.length > 0
+    ? Math.round((agreed.length / completed.length) * 100)
+    : 0
+
+  const pneumoniaCount = completed.filter(p => p.ensemble_prediction === 'PNEUMONIA').length
+
+  /* ---------- 7-day buckets for sparklines + activity chart ---------- */
+  const daily = useMemo(() => {
+    const days = []
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date()
+      d.setDate(d.getDate() - i)
+      days.push({
+        label: d.toLocaleDateString('en-US', { weekday: 'short' }),
+        key: d.toDateString(),
+        scans: 0, agreed: 0, disagreed: 0, pneumonia: 0,
+      })
+    }
+    completed.forEach(p => {
+      const bucket = days.find(x => x.key === new Date(p.created_at).toDateString())
+      if (!bucket) return
+      bucket.scans++
+      const allAgree = p.cnn_prediction === p.vit_prediction && p.vit_prediction === p.classical_prediction
+      allAgree ? bucket.agreed++ : bucket.disagreed++
+      if (p.ensemble_prediction === 'PNEUMONIA') bucket.pneumonia++
+    })
+    return days
+  }, [completed])
+
+  const today = new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
 
   const getPredictionColor = (pred) => {
-    if (!pred) return '#94a3b8'
-    return pred === 'NORMAL' ? '#10b981' : '#ef4444'
+    if (!pred) return C.ink3
+    return pred === 'NORMAL' ? C.green : C.red
   }
 
-  const styles = {
-    page: { background: '#0a0f1e', minHeight: '100vh', color: '#ffffff', fontFamily: 'system-ui, sans-serif' },
-    card: { background: 'linear-gradient(135deg, #161b33 0%, #0d1124 100%)', border: '1px solid #252b48', borderRadius: '16px', padding: '24px' },
-    statTitle: { color: '#94a3b8', fontSize: '12px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.04em', margin: 0 },
-    statValue: { color: '#ffffff', fontSize: '28px', fontWeight: '800', margin: '12px 0 0 0' },
-    sectionHeader: { display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px' },
-    sectionTitle: { fontSize: '16px', fontWeight: '700', margin: 0, color: '#e2e8f0' },
+  /* ---------- Reusable styles ---------- */
+  const card = {
+    background: C.card,
+    border: `1px solid ${C.border}`,
+    borderRadius: '18px',
+    boxShadow: '0 1px 2px rgba(16,24,40,0.04)',
   }
 
-  const stats = [
-    { icon: <Activity size={20} color="#00d4ff" />, label: 'Total Scans Processed', value: totalPredictions, accent: '#00d4ff' },
-    { icon: <Clock size={20} color="#7c3aed" />, label: 'Last Scan Date', value: lastDate, accent: '#7c3aed' },
-    { icon: <TrendingUp size={20} color="#38bdf8" />, label: 'Consensus Rate', value: `${agreementRate}%`, accent: '#38bdf8' },
+  /* ---------- Metric cards config ---------- */
+  const metrics = [
+    {
+      title: 'Total Scans',
+      icon: <ScanLine size={18} color={C.amber} />,
+      iconBg: C.amberSoft,
+      value: totalPredictions,
+      unit: 'scans',
+      pill: { text: 'Tracked', bg: C.amberSoft, color: C.amber },
+      stroke: C.amber,
+      fill: 'urlAmber',
+      data: daily.map(d => ({ v: d.scans })),
+    },
+    {
+      title: 'Consensus Rate',
+      icon: <Activity size={18} color={C.teal} />,
+      iconBg: C.tealSoft,
+      value: agreementRate,
+      unit: '%',
+      pill: agreementRate >= 70
+        ? { text: 'Healthy', bg: C.greenSoft, color: C.green }
+        : { text: 'Mixed', bg: C.amberSoft, color: C.amber },
+      stroke: C.teal,
+      fill: 'urlTeal',
+      data: daily.map(d => ({ v: d.scans ? Math.round((d.agreed / d.scans) * 100) : 0 })),
+    },
+    {
+      title: 'Pneumonia Flags',
+      icon: <Droplet size={18} color={C.coral} />,
+      iconBg: C.coralSoft,
+      value: pneumoniaCount,
+      unit: 'cases',
+      pill: { text: 'Detected', bg: C.coralSoft, color: C.coral },
+      stroke: C.coral,
+      fill: 'urlCoral',
+      data: daily.map(d => ({ v: d.pneumonia })),
+    },
   ]
 
   return (
     <PageWrapper session={session}>
-      <div style={styles.page}>
+      <div style={{ background: C.pageBg, minHeight: '100vh', borderRadius: '20px', padding: '28px', fontFamily: 'Inter, system-ui, sans-serif' }}>
 
-        {/* Header Block */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '28px', flexWrap: 'wrap', gap: '16px' }}>
+        {/* Header */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '28px', flexWrap: 'wrap', gap: '16px' }}>
           <div>
-            <h1 style={{ fontSize: '30px', fontWeight: '800', margin: '0 0 6px 0', background: 'linear-gradient(90deg, #00d4ff, #7c3aed)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
-              X-Ray Analysis Terminal
+            <h1 style={{ fontSize: '26px', fontWeight: '800', color: C.ink, margin: '0 0 4px 0', letterSpacing: '-0.02em' }}>
+              Health Overview
             </h1>
-            <p style={{ color: '#94a3b8', margin: 0, fontSize: '14px' }}>
-              Active Session: <span style={{ color: '#00d4ff', fontWeight: '600' }}>{user?.email}</span>
-            </p>
+            <p style={{ color: C.ink3, margin: 0, fontSize: '13px' }}>{today} · {user?.email}</p>
           </div>
-
           <div style={{
             display: 'flex', alignItems: 'center', gap: '8px',
-            background: backendStatus === 'connected' ? 'rgba(16,185,129,0.1)' : 'rgba(239,68,68,0.1)',
-            border: `1px solid ${backendStatus === 'connected' ? '#10b981' : '#ef4444'}`,
-            borderRadius: '20px', padding: '8px 16px'
+            background: backendStatus === 'connected' ? C.greenSoft : C.redSoft,
+            borderRadius: '999px', padding: '8px 16px',
           }}>
-            <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: backendStatus === 'connected' ? '#10b981' : '#ef4444' }} />
-            <span style={{ color: backendStatus === 'connected' ? '#10b981' : '#ef4444', fontSize: '12px', fontWeight: '700' }}>
-              {backendStatus === 'connected' ? 'BACKEND ONLINE' : 'BACKEND OFFLINE'}
+            <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: backendStatus === 'connected' ? C.green : C.red }} />
+            <span style={{ color: backendStatus === 'connected' ? C.green : C.red, fontSize: '12px', fontWeight: '700' }}>
+              {backendStatus === 'connected' ? 'AI Engine Online' : 'Engine Offline'}
             </span>
           </div>
         </div>
 
-        {/* Stat Cards */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '20px', marginBottom: '28px' }}>
-          {stats.map((stat, i) => (
-            <div key={i} style={{ ...styles.card, borderLeft: `3px solid ${stat.accent}` }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                <div style={{
-                  width: '40px', height: '40px', borderRadius: '10px',
-                  background: `${stat.accent}1a`, display: 'flex', alignItems: 'center', justifyContent: 'center'
-                }}>
-                  {stat.icon}
+        {/* Metric cards w/ sparklines */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '20px', marginBottom: '24px' }}>
+          {metrics.map((m, i) => (
+            <div key={i} style={{ ...card, padding: '20px', overflow: 'hidden' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <div style={{ width: '34px', height: '34px', borderRadius: '10px', background: m.iconBg, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    {m.icon}
+                  </div>
+                  <span style={{ color: C.ink2, fontSize: '13px', fontWeight: '600' }}>{m.title}</span>
                 </div>
-                <p style={styles.statTitle}>{stat.label}</p>
+                <span style={{ background: m.pill.bg, color: m.pill.color, fontSize: '11px', fontWeight: '700', padding: '3px 10px', borderRadius: '999px' }}>
+                  {m.pill.text}
+                </span>
               </div>
-              <p style={styles.statValue}>{stat.value}</p>
+
+              <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px', marginBottom: '6px' }}>
+                <span style={{ fontSize: '30px', fontWeight: '800', color: C.ink, lineHeight: 1 }}>{m.value}</span>
+                <span style={{ fontSize: '12px', color: C.ink3, fontWeight: '600' }}>{m.unit}</span>
+              </div>
+
+              <div style={{ height: '46px', margin: '0 -20px -20px' }}>
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={m.data} margin={{ top: 6, right: 0, left: 0, bottom: 0 }}>
+                    <defs>
+                      <linearGradient id={m.fill} x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor={m.stroke} stopOpacity={0.35} />
+                        <stop offset="100%" stopColor={m.stroke} stopOpacity={0} />
+                      </linearGradient>
+                    </defs>
+                    <Area type="monotone" dataKey="v" stroke={m.stroke} strokeWidth={2.5} fill={`url(#${m.fill})`} />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </div>
             </div>
           ))}
         </div>
 
-        {/* Workspace: Upload + Analytics */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1.3fr 0.7fr', gap: '24px', marginBottom: '28px', alignItems: 'start' }}>
-          {/* Upload column */}
-          <div>
-            <div style={styles.sectionHeader}>
-              <Activity size={18} color="#00d4ff" />
-              <h2 style={{ ...styles.sectionTitle, color: '#00d4ff' }}>Drop Radiograph File Below</h2>
+        {/* Upload + Activity */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.1fr', gap: '20px', marginBottom: '24px', alignItems: 'start' }}>
+          {/* Upload card */}
+          <div style={{ ...card, padding: '22px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px' }}>
+              <Stethoscope size={18} color={C.teal} />
+              <h2 style={{ fontSize: '16px', fontWeight: '700', color: C.ink, margin: 0 }}>New X-Ray Analysis</h2>
             </div>
             <ImageUploader />
           </div>
 
-          {/* Analytics column */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-            <div>
-              <div style={styles.sectionHeader}>
-                <TrendingUp size={18} color="#7c3aed" />
-                <h2 style={{ ...styles.sectionTitle, color: '#7c3aed' }}>Scan Activity (7 Days)</h2>
-              </div>
-              <div style={styles.card}>
-                <PredictionHistoryChart predictions={predictions || []} />
+          {/* Activity Growth chart */}
+          <div style={{ ...card, padding: '22px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+              <h2 style={{ fontSize: '16px', fontWeight: '700', color: C.ink, margin: 0 }}>Activity Growth</h2>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', border: `1px solid ${C.border}`, borderRadius: '8px', padding: '6px 10px', color: C.ink2, fontSize: '12px', fontWeight: '600' }}>
+                Last 7 Days <ChevronDown size={14} />
               </div>
             </div>
-            <div>
-              <div style={styles.sectionHeader}>
-                <Shield size={18} color="#38bdf8" />
-                <h2 style={{ ...styles.sectionTitle, color: '#38bdf8' }}>Model Leaderboard</h2>
-              </div>
-              <div style={styles.card}>
-                <ModelLeaderboard />
-              </div>
+
+            <ResponsiveContainer width="100%" height={260}>
+              <BarChart data={daily} barGap={4}>
+                <CartesianGrid strokeDasharray="3 3" stroke={C.border} vertical={false} />
+                <XAxis dataKey="label" stroke={C.ink3} tickLine={false} axisLine={false} style={{ fontSize: '11px' }} />
+                <YAxis stroke={C.ink3} tickLine={false} axisLine={false} allowDecimals={false} style={{ fontSize: '11px' }} />
+                <Tooltip
+                  cursor={{ fill: 'rgba(0,0,0,0.03)' }}
+                  contentStyle={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: '10px', fontSize: '12px', color: C.ink }}
+                />
+                <Bar dataKey="agreed" name="Consensus" fill={C.teal} radius={[6, 6, 0, 0]} maxBarSize={14} />
+                <Bar dataKey="disagreed" name="Split" fill={C.amber} radius={[6, 6, 0, 0]} maxBarSize={14} />
+                <Bar dataKey="pneumonia" name="Pneumonia" fill={C.coral} radius={[6, 6, 0, 0]} maxBarSize={14} />
+              </BarChart>
+            </ResponsiveContainer>
+
+            <div style={{ display: 'flex', gap: '20px', marginTop: '10px' }}>
+              {[
+                { c: C.teal, t: 'Consensus' },
+                { c: C.amber, t: 'Split' },
+                { c: C.coral, t: 'Pneumonia' },
+              ].map((l, i) => (
+                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: l.c }} />
+                  <span style={{ fontSize: '12px', color: C.ink2 }}>{l.t}</span>
+                </div>
+              ))}
             </div>
           </div>
         </div>
 
-        {/* PRIMARY ACTION PREDICTION BANNER BLOCK */}
+        {/* Latest diagnosis result */}
         {currentPrediction && currentPrediction.status === 'COMPLETED' && (
-          <div style={{ marginBottom: '28px' }}>
+          <div style={{ marginBottom: '24px' }}>
             <div style={{
-              background: currentPrediction.ensemble_prediction === 'NORMAL' ? 'rgba(16, 185, 129, 0.15)' : 'rgba(239, 68, 68, 0.15)',
-              border: `2px solid ${getPredictionColor(currentPrediction.ensemble_prediction)}`,
-              borderRadius: '16px', padding: '32px', marginBottom: '24px',
-              display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '24px'
+              ...card,
+              borderLeft: `6px solid ${getPredictionColor(currentPrediction.ensemble_prediction)}`,
+              padding: '28px', marginBottom: '20px',
+              display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '20px',
             }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
-                {currentPrediction.ensemble_prediction === 'NORMAL' 
-                  ? <CheckCircle size={48} color="#10b981" /> 
-                  : <XCircle size={48} color="#ef4444" />
-                }
+              <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+                {currentPrediction.ensemble_prediction === 'NORMAL'
+                  ? <CheckCircle size={44} color={C.green} />
+                  : <XCircle size={44} color={C.red} />}
                 <div>
-                  <span style={{ color: '#94a3b8', fontSize: '12px', fontWeight: '700', textTransform: 'uppercase' }}>
-                    Ensemble System Diagnosis Result
+                  <span style={{ color: C.ink3, fontSize: '12px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                    Ensemble Diagnosis
                   </span>
-                  <h2 style={{ color: getPredictionColor(currentPrediction.ensemble_prediction), fontSize: '36px', fontWeight: '900', margin: '4px 0' }}>
-                    {currentPrediction.ensemble_prediction === 'NORMAL' ? 'LUNGS NORMAL' : 'PNEUMONIA DETECTED'}
+                  <h2 style={{ color: getPredictionColor(currentPrediction.ensemble_prediction), fontSize: '30px', fontWeight: '800', margin: '4px 0' }}>
+                    {currentPrediction.ensemble_prediction === 'NORMAL' ? 'Lungs Normal' : 'Pneumonia Detected'}
                   </h2>
-                  <p style={{ color: '#ffffff', fontSize: '15px', margin: 0 }}>
-                    Confidence Score Assessment:{' '}
-                    <span style={{ color: '#00d4ff', fontWeight: '700' }}>{(currentPrediction.ensemble_confidence * 100).toFixed(1)}%</span>
+                  <p style={{ color: C.ink2, fontSize: '14px', margin: 0 }}>
+                    Confidence:{' '}
+                    <span style={{ color: C.ink, fontWeight: '700' }}>
+                      {(currentPrediction.ensemble_confidence * 100).toFixed(1)}%
+                    </span>
                   </p>
                 </div>
               </div>
-              <div style={{ textAlign: 'right', maxWidth: '320px' }}>
-                <span style={{ color: '#94a3b8', fontSize: '12px', fontWeight: '600', display: 'block', marginBottom: '4px' }}>🛡️ AI Screening Metric Guardrail</span>
-                <p style={{ color: '#64748b', fontSize: '11px', margin: 0, lineHeight: '1.4' }}>
-                  This automated system output is optimized to sort radiograph scans. Final physical diagnosis confirmation must be corroborated via official clinical testing.
-                </p>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', maxWidth: '300px', color: C.ink3, fontSize: '11px', lineHeight: 1.5 }}>
+                <Shield size={14} color={C.ink3} />
+                AI screening aid only. Confirm final diagnosis with clinical testing by a qualified physician.
               </div>
             </div>
 
-            {/* Individual Engine Readouts */}
-            <h3 style={{ fontSize: '15px', fontWeight: '700', marginBottom: '16px', color: '#94a3b8', textTransform: 'uppercase' }}>
-              Isolated Architecture Node Outputs
-            </h3>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px', marginBottom: '24px' }}>
+            {/* Individual model readouts */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px' }}>
               {[
-                { name: 'Convolutional Deep Layer (ResNet-50)', type: 'CNN', pred: currentPrediction.cnn_prediction, conf: currentPrediction.cnn_confidence },
-                { name: 'Vision Transformer (ViT-Base)', type: 'ViT', pred: currentPrediction.vit_prediction, conf: currentPrediction.vit_confidence },
-                { name: 'Classical Edge Vector (HOG + SVM)', type: 'ML', pred: currentPrediction.classical_prediction, conf: currentPrediction.classical_confidence }
-              ].map((model, i) => (
-                <div key={i} style={{ ...styles.card, borderTop: `4px solid ${getPredictionColor(model.pred)}` }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px' }}>
-                    <h4 style={{ color: '#ffffff', fontSize: '14px', fontWeight: '700', margin: 0 }}>{model.name}</h4>
-                    <span style={{ color: '#00d4ff', fontSize: '11px', fontWeight: '700' }}>{model.type}</span>
+                { name: 'CNN ResNet-50', type: 'CNN', pred: currentPrediction.cnn_prediction, conf: currentPrediction.cnn_confidence, accent: C.amber },
+                { name: 'Vision Transformer', type: 'ViT', pred: currentPrediction.vit_prediction, conf: currentPrediction.vit_confidence, accent: C.teal },
+                { name: 'Classical (HOG+SVM)', type: 'ML', pred: currentPrediction.classical_prediction, conf: currentPrediction.classical_confidence, accent: C.coral },
+              ].map((m, i) => (
+                <div key={i} style={{ ...card, padding: '20px', borderTop: `4px solid ${m.accent}` }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                    <h4 style={{ color: C.ink, fontSize: '14px', fontWeight: '700', margin: 0 }}>{m.name}</h4>
+                    <span style={{ background: `${m.accent}1f`, color: m.accent, fontSize: '11px', fontWeight: '700', padding: '3px 8px', borderRadius: '999px' }}>{m.type}</span>
                   </div>
-                  <p style={{ color: getPredictionColor(model.pred), fontSize: '20px', fontWeight: '900', margin: '0 0 16px 0' }}>
-                    {model.pred || 'PROCESSING'}
+                  <p style={{ color: getPredictionColor(m.pred), fontSize: '20px', fontWeight: '800', margin: '0 0 14px 0' }}>
+                    {m.pred || 'PROCESSING'}
                   </p>
                   <div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px', fontSize: '11px', color: '#94a3b8' }}>
-                      <span>Model Weight Confidence</span>
-                      <span style={{ color: '#fff' }}>{model.conf ? `${(model.conf * 100).toFixed(1)}%` : '0%'}</span>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px', fontSize: '11px', color: C.ink3 }}>
+                      <span>Confidence</span>
+                      <span style={{ color: C.ink, fontWeight: '600' }}>{m.conf ? `${(m.conf * 100).toFixed(1)}%` : '0%'}</span>
                     </div>
-                    <div style={{ height: '6px', background: '#1c213a', borderRadius: '3px', overflow: 'hidden' }}>
-                      <div style={{ height: '100%', width: model.conf ? `${model.conf * 100}%` : '0%', background: getPredictionColor(model.pred) }} />
+                    <div style={{ height: '6px', background: '#f1f2f7', borderRadius: '999px', overflow: 'hidden' }}>
+                      <div style={{ height: '100%', width: m.conf ? `${m.conf * 100}%` : '0%', background: m.accent, borderRadius: '999px' }} />
                     </div>
                   </div>
                 </div>
@@ -205,57 +320,51 @@ export default function DashboardPage({ session }) {
           </div>
         )}
 
-        {/* Recent History */}
-        <div>
-          <div style={styles.sectionHeader}>
-            <Clock size={18} color="#94a3b8" />
-            <h2 style={styles.sectionTitle}>Recent Scan History</h2>
+        {/* Bottom row: Leaderboard + Recent history */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 0.8fr', gap: '20px' }}>
+          <div style={{ ...card, padding: '22px' }}>
+            <ModelLeaderboard />
           </div>
-          {(!predictions || predictions.length === 0) ? (
-            <div style={{ ...styles.card, textAlign: 'center', padding: '48px', color: '#64748b' }}>
-              No scans yet. Upload a chest X-ray above to begin analysis.
-            </div>
-          ) : (
-            <div style={{ ...styles.card, padding: 0, overflow: 'hidden' }}>
-              {predictions.slice(0, 5).map((pred, i, arr) => (
-                <div key={i} style={{
-                  padding: '16px 24px',
-                  borderBottom: i < arr.length - 1 ? '1px solid #252b48' : 'none',
-                  display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px'
-                }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-                    {pred.ensemble_prediction === 'NORMAL'
-                      ? <CheckCircle size={20} color="#10b981" />
-                      : pred.ensemble_prediction
-                        ? <XCircle size={20} color="#ef4444" />
-                        : <AlertCircle size={20} color="#f59e0b" />}
-                    <div>
-                      <p style={{ color: getPredictionColor(pred.ensemble_prediction), fontWeight: '700', fontSize: '15px', margin: '0 0 2px 0' }}>
-                        {pred.ensemble_prediction || 'Processing...'}
-                      </p>
-                      <p style={{ color: '#64748b', fontSize: '12px', margin: 0 }}>
-                        {pred.created_at ? new Date(pred.created_at).toLocaleString() : '—'}
-                      </p>
+
+          <div style={{ ...card, padding: '22px' }}>
+            <h2 style={{ fontSize: '16px', fontWeight: '700', color: C.ink, margin: '0 0 16px 0' }}>Recent Scans</h2>
+            {(!predictions || predictions.length === 0) ? (
+              <p style={{ color: C.ink3, fontSize: '14px', textAlign: 'center', padding: '24px 0' }}>
+                No scans yet. Upload a chest X-ray to begin.
+              </p>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column' }}>
+                {predictions.slice(0, 5).map((pred, i, arr) => (
+                  <div key={i} style={{
+                    padding: '12px 0',
+                    borderBottom: i < arr.length - 1 ? `1px solid ${C.border}` : 'none',
+                    display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px',
+                  }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                      {pred.ensemble_prediction === 'NORMAL'
+                        ? <CheckCircle size={18} color={C.green} />
+                        : pred.ensemble_prediction
+                          ? <XCircle size={18} color={C.red} />
+                          : <AlertCircle size={18} color={C.amber} />}
+                      <div>
+                        <p style={{ color: getPredictionColor(pred.ensemble_prediction), fontWeight: '700', fontSize: '14px', margin: '0 0 2px 0' }}>
+                          {pred.ensemble_prediction || 'Processing...'}
+                        </p>
+                        <p style={{ color: C.ink3, fontSize: '11px', margin: 0 }}>
+                          {pred.created_at ? new Date(pred.created_at).toLocaleString() : '—'}
+                        </p>
+                      </div>
                     </div>
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                     {pred.ensemble_confidence != null && (
-                      <span style={{ color: '#94a3b8', fontSize: '13px', fontWeight: '600' }}>
-                        {(pred.ensemble_confidence * 100).toFixed(1)}% confidence
+                      <span style={{ color: C.ink2, fontSize: '12px', fontWeight: '600' }}>
+                        {(pred.ensemble_confidence * 100).toFixed(0)}%
                       </span>
                     )}
-                    <span style={{
-                      padding: '4px 12px', borderRadius: '20px', fontSize: '11px', fontWeight: '700',
-                      background: pred.status === 'COMPLETED' ? 'rgba(16,185,129,0.15)' : 'rgba(245,158,11,0.15)',
-                      color: pred.status === 'COMPLETED' ? '#10b981' : '#f59e0b',
-                    }}>
-                      {pred.status}
-                    </span>
                   </div>
-                </div>
-              ))}
-            </div>
-          )}
+                ))}
+              </div>
+            )}
+          </div>
         </div>
 
       </div>

@@ -33,17 +33,15 @@ const ModelLeaderboard = () => {
   };
 
   const getTypeColor = (type) => {
-    if (type === 'CNN') return '#6366f1';
-    if (type === 'VIT') return '#8b5cf6';
-    return '#f59e0b';
+    if (type === 'CNN') return '#f59e0b';
+    if (type === 'VIT') return '#14b8a6';
+    return '#f43f5e';
   };
 
   return (
     <div style={{
-      background: '#1a1d2e',
+      background: 'transparent',
       borderRadius: '12px',
-      padding: '20px',
-      border: '1px solid #2d3148',
     }}>
       <div style={{
         display: 'flex',
@@ -51,9 +49,9 @@ const ModelLeaderboard = () => {
         gap: '8px',
         marginBottom: '16px',
       }}>
-        <Trophy size={20} color="#6366f1" />
+        <Trophy size={20} color="#f59e0b" />
         <h3 style={{
-          color: '#fff',
+          color: '#1f2433',
           fontSize: '16px',
           fontWeight: '600',
           margin: 0,
@@ -99,11 +97,11 @@ const ModelLeaderboard = () => {
             fontSize: '13px',
           }}>
             <thead>
-              <tr style={{ borderBottom: '1px solid #2d3148' }}>
+              <tr style={{ borderBottom: '1px solid #edeff5' }}>
                 <th style={{
                   padding: '12px',
                   textAlign: 'left',
-                  color: '#94a3b8',
+                  color: '#9aa1b2',
                   fontWeight: '600',
                 }}>
                   Rank
@@ -111,7 +109,7 @@ const ModelLeaderboard = () => {
                 <th style={{
                   padding: '12px',
                   textAlign: 'left',
-                  color: '#94a3b8',
+                  color: '#9aa1b2',
                   fontWeight: '600',
                 }}>
                   Model Name
@@ -119,7 +117,7 @@ const ModelLeaderboard = () => {
                 <th style={{
                   padding: '12px',
                   textAlign: 'center',
-                  color: '#94a3b8',
+                  color: '#9aa1b2',
                   fontWeight: '600',
                 }}>
                   Type
@@ -127,7 +125,7 @@ const ModelLeaderboard = () => {
                 <th style={{
                   padding: '12px',
                   textAlign: 'center',
-                  color: '#94a3b8',
+                  color: '#9aa1b2',
                   fontWeight: '600',
                 }}>
                   Accuracy
@@ -135,7 +133,7 @@ const ModelLeaderboard = () => {
                 <th style={{
                   padding: '12px',
                   textAlign: 'center',
-                  color: '#94a3b8',
+                  color: '#9aa1b2',
                   fontWeight: '600',
                 }}>
                   AUC-ROC
@@ -143,7 +141,7 @@ const ModelLeaderboard = () => {
                 <th style={{
                   padding: '12px',
                   textAlign: 'center',
-                  color: '#94a3b8',
+                  color: '#9aa1b2',
                   fontWeight: '600',
                 }}>
                   F1 Score
@@ -155,14 +153,14 @@ const ModelLeaderboard = () => {
                 <tr
                   key={model.rank}
                   style={{
-                    borderBottom: '1px solid #2d3148',
-                    background: model.rank === 1 ? 'rgba(99, 102, 241, 0.05)' : 'transparent',
+                    borderBottom: '1px solid #edeff5',
+                    background: model.rank === 1 ? 'rgba(245, 158, 11, 0.06)' : 'transparent',
                   }}
                 >
                   <td style={{
                     padding: '12px',
                     textAlign: 'left',
-                    color: '#fff',
+                    color: '#1f2433',
                     fontWeight: '600',
                   }}>
                     <div style={{
@@ -170,14 +168,14 @@ const ModelLeaderboard = () => {
                       alignItems: 'center',
                       gap: '6px',
                     }}>
-                      {model.rank === 1 && <Star size={16} fill="#6366f1" color="#6366f1" />}
+                      {model.rank === 1 && <Star size={16} fill="#f59e0b" color="#f59e0b" />}
                       <span>#{model.rank}</span>
                     </div>
                   </td>
                   <td style={{
                     padding: '12px',
                     textAlign: 'left',
-                    color: '#fff',
+                    color: '#1f2433',
                     fontWeight: '500',
                   }}>
                     {model.name}

@@ -50,9 +50,9 @@ const ImageUploader = () => {
 
   return (
     <div style={{
-      background: 'var(--bg-card)',
+      background: '#ffffff',
       borderRadius: '12px',
-      border: '1px solid var(--border)',
+      border: '1px solid #edeff5',
       overflow: 'hidden',
     }}>
       {/* Drop Zone — always visible when no file selected */}
@@ -64,11 +64,11 @@ const ImageUploader = () => {
             textAlign: 'center',
             cursor: 'pointer',
             background: isDragActive
-              ? 'rgba(99,102,241,0.08)'
-              : 'transparent',
+              ? 'rgba(20,184,166,0.08)'
+              : '#f8f9fc',
             border: isDragActive
-              ? '2px dashed #6366f1'
-              : '2px dashed var(--border)',
+              ? '2px dashed #14b8a6'
+              : '2px dashed #d9dce6',
             borderRadius: '12px',
             transition: 'all 0.2s',
           }}
@@ -76,11 +76,11 @@ const ImageUploader = () => {
           <input {...getInputProps()} />
           <Upload size={48} style={{
             margin: '0 auto 16px',
-            color: '#6366f1',
+            color: '#14b8a6',
             display: 'block',
           }} />
           <h3 style={{
-            color: 'var(--text-primary)',
+            color: '#1f2433',
             fontSize: '18px',
             fontWeight: '600',
             margin: '0 0 8px 0',
@@ -90,14 +90,14 @@ const ImageUploader = () => {
               : 'Drag and drop your X-ray'}
           </h3>
           <p style={{
-            color: 'var(--text-secondary)',
+            color: '#6b7280',
             fontSize: '14px',
             margin: '0 0 8px 0',
           }}>
             or click to browse files
           </p>
           <p style={{
-            color: 'var(--text-muted)',
+            color: '#9aa1b2',
             fontSize: '12px',
             margin: 0,
           }}>
@@ -134,7 +134,7 @@ const ImageUploader = () => {
 
           {/* File Info */}
           <p style={{
-            color: 'var(--text-secondary)',
+            color: '#6b7280',
             fontSize: '13px',
             margin: '0 0 12px 0',
           }}>
@@ -149,7 +149,7 @@ const ImageUploader = () => {
             style={{
               width: '100%',
               padding: '14px',
-              background: '#6366f1',
+              background: '#14b8a6',
               border: 'none',
               borderRadius: '8px',
               color: '#fff',
@@ -210,26 +210,26 @@ const ImageUploader = () => {
         <div style={{
           padding: '24px',
           textAlign: 'center',
-          borderTop: '1px solid var(--border)',
+          borderTop: '1px solid #edeff5',
         }}>
           <Loader2
             size={32}
             style={{
-              color: '#6366f1',
+              color: '#14b8a6',
               animation: 'spin 1s linear infinite',
               margin: '0 auto 12px',
               display: 'block',
             }}
           />
           <p style={{
-            color: 'var(--text-primary)',
+            color: '#1f2433',
             fontWeight: '600',
             margin: '0 0 4px 0',
           }}>
             AI Models Analyzing...
           </p>
           <p style={{
-            color: 'var(--text-secondary)',
+            color: '#6b7280',
             fontSize: '13px',
             margin: 0,
           }}>
