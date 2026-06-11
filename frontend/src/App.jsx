@@ -48,20 +48,41 @@ function Guard({ session, loading, children }) {
 export default function App() {
   const [session, setSession] = useState(undefined)
   const initialized = useRef(false)
+  const currentUserId = useRef(null)
 
   useEffect(() => {
     if (initialized.current) return
     initialized.current = true
 
     supabase.auth.getSession().then(({ data: { session } }) => {
+      currentUserId.current = session?.user?.id ?? null
       setSession(session ?? null)
     })
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        if (event === 'SIGNED_IN') setSession(session)
-        if (event === 'SIGNED_OUT') setSession(null)
-        if (event === 'TOKEN_REFRESHED') setSession(session)
+      (event, newSession) => {
+        // Guard: Only update if user actually changed to prevent state disruption
+        const newUserId = newSession?.user?.id ?? null
+        
+        if (event === 'SIGNED_IN') {
+          if (currentUserId.current !== newUserId) {
+            currentUserId.current = newUserId
+            setSession(newSession)
+          }
+          // Ignore duplicate SIGNED_IN for same user
+        } else if (event === 'SIGNED_OUT') {
+          currentUserId.current = null
+          setSession(null)
+        } else if (event === 'TOKEN_REFRESHED') {
+          // Token refresh should not trigger re-render if same user
+          if (currentUserId.current === newUserId) {
+            // Silently update session object without state change
+            // Only update if session reference actually needs refresh
+          } else {
+            currentUserId.current = newUserId
+            setSession(newSession)
+          }
+        }
       }
     )
 

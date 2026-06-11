@@ -1,9 +1,8 @@
 import { useEffect, useState } from 'react'
-import { Activity, Clock, TrendingUp,
-         CheckCircle, XCircle, Brain,
-         Upload, BarChart2, Shield } from 'lucide-react'
+import { Activity, Clock, TrendingUp, CheckCircle, XCircle, AlertCircle, Shield } from 'lucide-react'
 import PageWrapper from '../components/layout/PageWrapper'
 import ImageUploader from '../components/upload/ImageUploader'
+import PredictionHistoryChart from '../components/charts/PredictionHistoryChart'
 import ModelLeaderboard from '../components/charts/ModelLeaderboard'
 import { useHistory } from '../hooks/useHistory'
 import usePredictionStore from '../store/predictionStore'
@@ -18,24 +17,30 @@ export default function DashboardPage({ session }) {
 
   useEffect(() => {
     apiClient.get('/models/')
-      .then(() => setBackendStatus('connected'))
-      .catch(() => setBackendStatus('error'))
+      .then(() => {
+        setBackendStatus('connected')
+      })
+      .catch(() => {
+        setBackendStatus('error')
+        toast.error('AI engine connection dropped')
+      })
   }, [])
 
-  const totalPredictions = predictions.length
-  const lastDate = predictions[0]?.created_at
+  const totalPredictions = predictions?.length || 0
+  const lastDate = predictions?.[0]?.created_at
     ? new Date(predictions[0].created_at).toLocaleDateString()
-    : 'None yet'
-  const completed = predictions.filter(p => p.status === 'COMPLETED')
+    : 'No scans run'
+  
+  const completed = predictions?.filter(p => p.status === 'COMPLETED') || []
   const agreed = completed.filter(
-    p => p.cnn_prediction === p.vit_prediction &&
-         p.vit_prediction === p.classical_prediction
+    p => p.cnn_prediction === p.vit_prediction && p.vit_prediction === p.classical_prediction
   )
-  const agreementRate = completed.length > 0
-    ? Math.round((agreed.length / completed.length) * 100)
-    : 0
+  const agreementRate = completed.length > 0 ? Math.round((agreed.length / completed.length) * 100) : 0
 
-  const isNormal = (pred) => pred === 'NORMAL'
+  const getPredictionColor = (pred) => {
+    if (!pred) return '#94a3b8'
+    return pred === 'NORMAL' ? '#10b981' : '#ef4444'
+  }
 
   const styles = {
     page: {
