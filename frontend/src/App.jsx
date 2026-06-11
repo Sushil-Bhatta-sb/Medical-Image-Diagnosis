@@ -94,13 +94,10 @@ export default function App() {
   return (
     <Routes>
       {/* Public routes */}
+      {/* Landing page is ALWAYS the entry point, even with a saved session */}
       <Route
         path="/"
-        element={
-          loading ? <Spinner /> :
-          session ? <Navigate to="/dashboard" replace /> :
-          <LandingPage />
-        }
+        element={<LandingPage />}
       />
       <Route
         path="/auth"
