@@ -1,63 +1,20 @@
-import { useState } from 'react';
-import Sidebar from './Sidebar';
-import Navbar from './Navbar';
+import Navbar from './Navbar'
 
-const PageWrapper = ({ children, session }) => {
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-
+export default function PageWrapper({ session, children }) {
   return (
-    <div style={{ display: 'flex', flexDirection: 'column' }}>
+    <div style={{
+      minHeight: '100vh',
+      background: '#060b14',
+    }}>
       <Navbar session={session} />
-      <div style={{ display: 'flex' }}>
-        <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
-      
-      <main
-        className="main-content-desktop"
-        style={{
-          flex: 1,
-          width: '100%',
-          marginLeft: 'auto',
-        }}
-      >
-        {/* Mobile menu button (in header area) */}
-        <div className="mobile-menu-fab" style={{
-          display: 'flex',
-        }}>
-          <button
-            onClick={() => setSidebarOpen(!sidebarOpen)}
-            style={{
-              position: 'fixed',
-              bottom: '20px',
-              right: '20px',
-              zIndex: 100,
-              width: '56px',
-              height: '56px',
-              borderRadius: '50%',
-              background: 'var(--accent)',
-              color: 'white',
-              border: 'none',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: '24px',
-            }}
-          >
-            ≡
-          </button>
-        </div>
-
-        <div style={{
-          maxWidth: '1400px',
-          margin: '0 auto',
-          padding: '20px',
-        }}>
-          {children}
-        </div>
+      <main style={{
+        maxWidth: '1200px',
+        margin: '0 auto',
+        padding: '32px 24px',
+      }}>
+        {children}
       </main>
-      </div>
     </div>
-  );
-};
+  )
+}
 
-export default PageWrapper;
