@@ -56,7 +56,11 @@ def run_inference(prediction_id):
 
         # Update user prediction count
         try:
-            profile = prediction.user.userprofile
+            from apps.accounts.models import UserProfile
+            profile, _ = UserProfile.objects.get_or_create(
+                user=prediction.user,
+                defaults={'supabase_uid': prediction.user.username},
+            )
             profile.total_predictions += 1
             profile.save()
         except Exception as e:

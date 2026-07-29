@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useAuth } from '../../hooks/useAuth';
-import { Mail, Lock, Loader2, Check } from 'lucide-react';
+import { Mail, Lock, Loader2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 const SignupForm = ({ onSwitchToLogin }) => {

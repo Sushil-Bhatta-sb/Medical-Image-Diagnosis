@@ -9,5 +9,5 @@ app_name = 'models_registry'
 
 urlpatterns = [
     path('', MLModelListView.as_view(), name='list'),
-    path('<int:id>/', MLModelDetailView.as_view(), name='detail'),
+    path('<int:pk>/', MLModelDetailView.as_view(), name='detail'),
 ]

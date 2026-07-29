@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom'
 import { Brain, Zap, BarChart3, 
-         Shield, ArrowRight, Activity } from 'lucide-react'
+         ArrowRight, Activity } from 'lucide-react'
 
 export default function LandingPage() {
   const navigate = useNavigate()

@@ -80,7 +80,7 @@ const ROCCurveChart = () => {
           />
           <Line
             type="monotone"
-            data={data.map((d, i) => ({
+            data={data.map((d) => ({
               fpr: d.fpr,
               tpr: d.tpr * 0.85,
             }))}

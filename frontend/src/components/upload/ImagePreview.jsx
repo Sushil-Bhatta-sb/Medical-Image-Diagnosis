@@ -1,4 +1,4 @@
-import { X, RefreshCw } from 'lucide-react';
+import { X } from 'lucide-react';
 
 const ImagePreview = ({ file, onRemove }) => {
   const fileSize = (file.size / 1024).toFixed(2);

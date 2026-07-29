@@ -1,7 +1,7 @@
 import { useHistory } from '../hooks/useHistory';
 import { supabase } from '../lib/supabaseClient';
 import PageWrapper from '../components/layout/PageWrapper';
-import { User, Calendar, Trash2, AlertCircle, LogOut } from 'lucide-react';
+import { Calendar, Trash2, AlertCircle, LogOut } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 const ProfilePage = ({ session }) => {

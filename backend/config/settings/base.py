@@ -13,7 +13,10 @@ load_dotenv()
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
 # Security Settings
-SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'django-insecure-change-me-in-production')
+# Support both SECRET_KEY (used in .env) and DJANGO_SECRET_KEY for compatibility
+SECRET_KEY = os.getenv('SECRET_KEY') or os.getenv(
+    'DJANGO_SECRET_KEY', 'django-insecure-change-me-in-production'
+)
 DEBUG = os.getenv('DEBUG', 'True') == 'True'
 ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
 
@@ -154,6 +157,7 @@ CELERY_TASK_TIME_LIMIT = 30 * 60  # 30 minutes
 SUPABASE_URL = os.getenv('SUPABASE_URL')
 SUPABASE_KEY = os.getenv('SUPABASE_KEY')
 SUPABASE_JWT_SECRET = os.getenv('SUPABASE_JWT_SECRET')
+SUPABASE_SERVICE_KEY = os.getenv('SUPABASE_SERVICE_KEY')
 
 # Logging
 LOGGING = {
