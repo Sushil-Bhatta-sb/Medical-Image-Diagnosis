@@ -1,0 +1,33 @@
+# ---- Environment / secrets ----
+.env
+.env.*
+!.env.example
+*/.env
+*/.env.*
+
+# ---- Python / Django ----
+venv/
+.venv/
+__pycache__/
+*.py[cod]
+*.sqlite3
+db.sqlite3
+staticfiles/
+media/
+*.log
+
+# ---- Node / Vite (frontend) ----
+node_modules/
+dist/
+dist-ssr/
+*.local
+.vite/
+
+# ---- Editors / OS ----
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# ---- ML weights (large binaries) ----
+*.pth

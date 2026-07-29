@@ -9,6 +9,11 @@ from rest_framework.exceptions import AuthenticationFailed
 
 logger = logging.getLogger(__name__)
 
+# Tolerate clock skew (in seconds) between this machine and Supabase's servers
+# when validating the iat/nbf/exp claims. Keep your system clock in sync to
+# minimise this; the leeway just prevents hard failures on minor drift.
+JWT_LEEWAY_SECONDS = 600
+
 # Cached JWKS client (fetches Supabase public signing keys once, then caches).
 _jwks_client = None
 
@@ -72,6 +77,7 @@ class SupabaseJWTAuthentication(BaseAuthentication):
                     token,
                     signing_key.key,
                     algorithms=['ES256', 'RS256'],
+                    leeway=JWT_LEEWAY_SECONDS,
                     options={'verify_aud': False},
                 )
 
@@ -82,6 +88,7 @@ class SupabaseJWTAuthentication(BaseAuthentication):
                     token,
                     settings.SUPABASE_JWT_SECRET,
                     algorithms=['HS256'],
+                    leeway=JWT_LEEWAY_SECONDS,
                     options={'verify_aud': False},
                 )
 
