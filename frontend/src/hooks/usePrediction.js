@@ -1,5 +1,4 @@
 import { useState, useCallback, useRef } from 'react'
-import { supabase } from '../lib/supabaseClient'
 import apiClient from '../lib/apiClient'
 import usePredictionStore from '../store/predictionStore'
 import toast from 'react-hot-toast'
@@ -31,29 +30,27 @@ export const usePrediction = () => {
       setIsAnalyzing(true)
       storeSetIsAnalyzing(true)
 
-      // 1. Upload to Supabase Storage
-      const fileExtension = imageFile.name.split('.').pop()
-      const fileName = `${Date.now()}.${fileExtension}`
-      const filePath = `predictions/${fileName}`
+      // 1. Upload image via Django backend (uses service key, bypasses storage RLS)
+      const formData = new FormData()
+      formData.append('file', imageFile)
 
-      const { error: uploadError } = await supabase.storage
-        .from('xray-images')
-        .upload(filePath, imageFile)
-
-      if (uploadError) {
-        toast.error('Failed to upload image: ' + uploadError.message)
+      let publicUrl
+      try {
+        const uploadResponse = await apiClient.post('/predictions/upload/', formData, {
+          headers: { 'Content-Type': 'multipart/form-data' },
+        })
+        publicUrl = uploadResponse.data.image_url
+      } catch (uploadError) {
+        const message =
+          uploadError?.response?.data?.detail || uploadError.message || 'Upload failed'
+        toast.error('Failed to upload image: ' + message)
         stopPolling()
         return
       }
 
-      // 2. Get public URL
-      const { data: { publicUrl } } = supabase.storage
-        .from('xray-images')
-        .getPublicUrl(filePath)
-
       console.log('Image uploaded:', publicUrl)
 
-      // 3. Create prediction in Django
+      // 2. Create prediction in Django
       const response = await apiClient.post('/predictions/', {
         image_url: publicUrl
       })
